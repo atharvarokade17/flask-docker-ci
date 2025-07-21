@@ -32,18 +32,16 @@ jobs:
     executor: python-executor
     steps:
       - run:
+          name: Install sendmail
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y sendmail
+      - run:
           name: Send Email Notification
           command: |
             echo "Subject: Docker Build Successful\n\nYour image has been built and pushed to Docker Hub." | \
             sendmail -f "$EMAIL_FROM" "$EMAIL_TO"
-
-      - run:
-          name: Send Teams Notification
-          command: |
-            curl -H "Content-Type: application/json" \
-              -d '{"text": "Docker image built and pushed to Docker Hub."}' \
-              $TEAMS_WEBHOOK_URL
-
+            
 workflows:
   version: 2
   docker_build_and_notify:
