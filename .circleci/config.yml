@@ -11,21 +11,19 @@ jobs:
     steps:
       - checkout
 
-      - setup_remote_docker
-
       - run:
           name: Build Docker Image
-          command: |
+          command: 
             docker build -t $DOCKERHUB_USERNAME/flask-app:latest .
 
       - run:
-          name: Authenticate with Docker Hub
-          command: |
+          name: Authenticate 
+          command: 
             echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
 
       - run:
           name: Push Docker Image
-          command: |
+          command: 
             docker push $DOCKERHUB_USERNAME/flask-app:latest
 
 workflows:
