@@ -28,25 +28,8 @@ jobs:
           command: |
             docker push $DOCKERHUB_USERNAME/flask-app:latest
 
-  send_notifications:
-    executor: python-executor
-    steps:
-      - run:
-          name: Install sendmail
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y sendmail
-      - run:
-          name: Send Email Notification
-          command: |
-            echo "Subject: Docker Build Successful\n\nYour image has been built and pushed to Docker Hub." | \
-            sendmail -f "$EMAIL_FROM" "$EMAIL_TO"
-            
 workflows:
   version: 2
-  docker_build_and_notify:
+  docker_build:
     jobs:
       - build_docker_image
-      - send_notifications:
-          requires:
-            - build_docker_image
