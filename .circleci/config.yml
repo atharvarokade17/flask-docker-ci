@@ -1,0 +1,54 @@
+version: 2.1
+
+executors:
+  python-executor:
+    docker:
+      - image: cimg/python:3.11
+
+jobs:
+  build_docker_image:
+    executor: python-executor
+    steps:
+      - checkout
+
+      - setup_remote_docker
+
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t $DOCKERHUB_USERNAME/flask-app:latest .
+
+      - run:
+          name: Authenticate with Docker Hub
+          command: |
+            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+
+      - run:
+          name: Push Docker Image
+          command: |
+            docker push $DOCKERHUB_USERNAME/flask-app:latest
+
+  send_notifications:
+    executor: python-executor
+    steps:
+      - run:
+          name: Send Email Notification
+          command: |
+            echo "Subject: Docker Build Successful\n\nYour image has been built and pushed to Docker Hub." | \
+            sendmail -f "$EMAIL_FROM" "$EMAIL_TO"
+
+      - run:
+          name: Send Teams Notification
+          command: |
+            curl -H "Content-Type: application/json" \
+              -d '{"text": "Docker image built and pushed to Docker Hub."}' \
+              $TEAMS_WEBHOOK_URL
+
+workflows:
+  version: 2
+  docker_build_and_notify:
+    jobs:
+      - build_docker_image
+      - send_notifications:
+          requires:
+            - build_docker_image
