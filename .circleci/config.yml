@@ -9,12 +9,16 @@ parameters:
     default: ""
   email_to:
     type: string
-    default: "atharvarokade07@gmail.com"
+    default: "atharvarokade07@gmail.com"  
+
+executors:
+  python-executor:
+    docker:
+      - image: cimg/python:3.11
 
 jobs:
   build_docker_image:
-    docker:
-      - image: cimg/python:3.11
+    executor: python-executor
     parameters:
       image_tag_date:
         type: string
@@ -22,8 +26,7 @@ jobs:
     steps:
       - checkout
 
-      - setup_remote_docker:
-          docker_layer_caching: true
+      - setup_remote_docker
 
       - run:
           name: Authenticate with DockerHub
@@ -40,35 +43,31 @@ jobs:
             fi
             echo "Using image tag: $IMAGE_TAG"
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            echo "export IMAGE_FULL_NAME=$IMAGE_NAME:$IMAGE_TAG" >> $BASH_ENV
-            source $BASH_ENV
-            docker build --platform linux/amd64 -t $IMAGE_FULL_NAME .
+            docker build -t $IMAGE_NAME:$IMAGE_TAG .
 
       - run:
           name: Push Docker image
           command: |
             source $BASH_ENV
-            docker push $IMAGE_FULL_NAME
+            docker push $IMAGE_NAME:$IMAGE_TAG
 
       - run:
           name: Save image tag for email
           command: |
-            source $BASH_ENV
             echo "CircleCI image tag: $IMAGE_TAG"
             echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
-            echo "export EMAIL_BODY=\"Docker image $IMAGE_FULL_NAME has been built and pushed.\"" >> $BASH_ENV
+            echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
 
 workflows:
   version: 2
   docker_build:
     jobs:
       - build_docker_image:
-          image_tag_date: << pipeline.parameters.image_tag_date >>
-          filters:
-            branches:
-              only: dev
+          image_tag_date: "<< pipeline.parameters.image_tag_date >>"
+        filters:branches:
+         only:dev
       - email/send:
-          to: << pipeline.parameters.email_to >>
+          to: "<< pipeline.parameters.email_to >>"
           subject: "Docker Build Complete"
           body: "Docker image has been built and pushed successfully."
           requires:
