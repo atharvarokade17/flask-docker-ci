@@ -13,11 +13,16 @@ jobs:
 
       - setup_remote_docker
 
+      - run:
+          name: Get Date Tag
+          command: 
+            echo "export DATE_TAG=$(date +'%Y-%m-%d')" >> $BASH_ENV
 
       - run:
           name: Build Docker Image
           command: 
-            docker build -t $DOCKERHUB_USERNAME/flask-app:latest .
+            source $BASH_ENV
+            docker build -t $DOCKERHUB_USERNAME/flask-app:$DATE_TAG .
 
       - run:
           name: Authenticate 
@@ -27,7 +32,8 @@ jobs:
       - run:
           name: Push Docker Image
           command: 
-            docker push $DOCKERHUB_USERNAME/flask-app:latest
+            source $BASH_ENV
+            docker push $DOCKERHUB_USERNAME/flask-app:$DATE_TAG
 
 workflows:
   version: 2
