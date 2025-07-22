@@ -64,8 +64,7 @@ workflows:
     jobs:
       - build_docker_image:
           image_tag_date: "<< pipeline.parameters.image_tag_date >>"
-        filters:branches:
-         only:dev
+        
       - email/send:
           to: "<< pipeline.parameters.email_to >>"
           subject: "Docker Build Complete"
