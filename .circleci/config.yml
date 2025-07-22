@@ -1,9 +1,9 @@
 version: 2.1
 
 parameters:
-  image_tag:
+  image_tag_date:
     type: string
-    default: ""  # Optional: You can leave this blank and handle it in the job
+    default: ""
 
 executors:
   python-executor:
@@ -11,8 +11,12 @@ executors:
       - image: cimg/python:3.11
 
 jobs:
-  build_and_push:
+  build_docker_image:
     executor: python-executor
+    parameters:
+      image_tag_date:
+        type: string
+        default: ""
     steps:
       - checkout
 
@@ -24,22 +28,26 @@ jobs:
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
       - run:
-          name: Build and Push Docker Image
+          name: Build Docker image with dynamic date tag
           command: |
-            IMAGE_NAME="your-dockerhub-username/your-repo-name"
-            if [ -z "<< pipeline.parameters.image_tag >>" ]; then
+            if [ -z "<< parameters.image_tag_date >>" ]; then
               IMAGE_TAG=$(date +'%Y%m%d')
             else
-              IMAGE_TAG="<< pipeline.parameters.image_tag >>"
+              IMAGE_TAG="<< parameters.image_tag_date >>"
             fi
-
-            echo "Using tag: $IMAGE_TAG"
-
+            echo "Using image tag: $IMAGE_TAG"
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      - run:
+          name: Push Docker image
+          command: |
+            source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
 workflows:
   version: 2
-  build-and-deploy:
+  docker_build:
     jobs:
-      - build_and_push
+      - build_docker_image:
+          image_tag_date: "<< pipeline.parameters.image_tag_date >>"
