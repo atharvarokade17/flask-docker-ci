@@ -9,24 +9,19 @@ parameters:
     default: ""
   email_to:
     type: string
-    default: "atharvarokade07@gmail.com"  
-
-executors:
-  python-executor:
-    docker:
-      - image: cimg/python:3.11
+    default: "atharvarokade07@gmail.com"
 
 jobs:
   build_docker_image:
-    executor: python-executor
+    docker:
+      - image: cimg/python:3.11
     parameters:
       image_tag_date:
         type: string
         default: ""
+    docker_layer_caching: true
     steps:
       - checkout
-
-      - setup_remote_docker
 
       - run:
           name: Authenticate with DockerHub
@@ -43,20 +38,23 @@ jobs:
             fi
             echo "Using image tag: $IMAGE_TAG"
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build -t $IMAGE_NAME:$IMAGE_TAG .
+            echo "export IMAGE_FULL_NAME=$IMAGE_NAME:$IMAGE_TAG" >> $BASH_ENV
+            source $BASH_ENV
+            docker build --platform linux/amd64 -t $IMAGE_FULL_NAME .
 
       - run:
           name: Push Docker image
           command: |
             source $BASH_ENV
-            docker push $IMAGE_NAME:$IMAGE_TAG
+            docker push $IMAGE_FULL_NAME
 
       - run:
           name: Save image tag for email
           command: |
+            source $BASH_ENV
             echo "CircleCI image tag: $IMAGE_TAG"
             echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
-            echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
+            echo "export EMAIL_BODY=\"Docker image $IMAGE_FULL_NAME has been built and pushed.\"" >> $BASH_ENV
 
 workflows:
   version: 2
@@ -64,7 +62,9 @@ workflows:
     jobs:
       - build_docker_image:
           image_tag_date: "<< pipeline.parameters.image_tag_date >>"
-
+        filters:
+          branches:
+            only: dev
       - email/send:
           to: "<< pipeline.parameters.email_to >>"
           subject: "Docker Build Complete"
