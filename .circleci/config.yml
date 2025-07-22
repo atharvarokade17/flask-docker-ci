@@ -40,7 +40,7 @@ jobs:
             fi
             echo "Using image tag: $IMAGE_TAG"
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build -t $IMAGE_NAME:$IMAGE_TAG .
+            docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
 
       - run:
           name: Push Docker image
