@@ -11,14 +11,10 @@ parameters:
     type: string
     default: "atharvarokade07@gmail.com"  
 
-executors:
-  python-executor:
-    docker:
-      - image: cimg/python:3.11
-
 jobs:
   build_docker_image:
-    executor: python-executor
+    docker:
+      - image: cimg/python:3.11
     parameters:
       image_tag_date:
         type: string
@@ -54,6 +50,7 @@ jobs:
       - run:
           name: Save image tag for email
           command: |
+            source $BASH_ENV
             echo "CircleCI image tag: $IMAGE_TAG"
             echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
             echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
