@@ -9,7 +9,7 @@ parameters:
     default: ""
   email_to:
     type: string
-    default: "you@example.com"  
+    default: "atharvarokade07@gmail.com"  
 
 executors:
   python-executor:
