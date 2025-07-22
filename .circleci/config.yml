@@ -77,3 +77,4 @@ workflows:
           body: "Docker image has been built and pushed successfully."
           requires:
             - build_docker_image
+            
