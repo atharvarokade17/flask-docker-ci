@@ -63,12 +63,12 @@ workflows:
   docker_build:
     jobs:
       - build_docker_image:
-          image_tag_date: "<< pipeline.parameters.image_tag_date >>"
-        filters:
-          branches:
-            only: dev
+          image_tag_date: << pipeline.parameters.image_tag_date >>
+          filters:
+            branches:
+              only: dev
       - email/send:
-          to: "<< pipeline.parameters.email_to >>"
+          to: << pipeline.parameters.email_to >>
           subject: "Docker Build Complete"
           body: "Docker image has been built and pushed successfully."
           requires:
