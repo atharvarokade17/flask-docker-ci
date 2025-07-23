@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   email: cinotify/email@1.2.1
-  teams-notifier: cloudposse/teams-notifier@0.1.1
+  ms-teams: opub/ms-teams-orb@1.0.3
 
 parameters:
   image_tag_date:
@@ -10,7 +10,7 @@ parameters:
     default: ""
   email_to:
     type: string
-    default: "atharvarokade07@gmail.com"  
+    default: "atharvarokade07@gmail.com"
 
 jobs:
   build_docker_image:
@@ -56,9 +56,11 @@ jobs:
             echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
             echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
 
-      - teams-notifier/notify:
-          webhook-url: $TEAMS_WEBHOOK_URL
-          message: "Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
+      - ms-teams/report:
+          webhook_url: $TEAMS_WEBHOOK_URL
+          only_on_fail: false
+          message: |
+            Docker image **$IMAGE_NAME:$IMAGE_TAG** has been built and pushed successfully.
 
 workflows:
   version: 2
@@ -70,6 +72,6 @@ workflows:
       - email/send:
           to: "<< pipeline.parameters.email_to >>"
           subject: "Docker Build Complete"
-          body: "Docker image has been built and pushed successfully."
+          body: "Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed successfully."
           requires:
             - build_docker_image
