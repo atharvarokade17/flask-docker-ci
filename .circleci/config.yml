@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   email: cinotify/email@1.2.1
+  teams-notifier: cloudposse/teams-notifier@0.1.1
 
 parameters:
   image_tag_date:
@@ -49,20 +50,15 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
 
       - run:
-          name: Notify via Email
+          name: Prepare Email Content
           command: |
             source $BASH_ENV
-            echo "CircleCI image tag: $IMAGE_TAG"
             echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
             echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
 
-      - run:
-          name: Notify Microsoft Teams
-          command: |
-            source $BASH_ENV
-            MESSAGE="Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
-            PAYLOAD="{\"text\": \"$MESSAGE\"}"
-            curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
+      - teams-notifier/notify:
+          webhook-url: $TEAMS_WEBHOOK_URL
+          message: "Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
 
 workflows:
   version: 2
@@ -77,4 +73,3 @@ workflows:
           body: "Docker image has been built and pushed successfully."
           requires:
             - build_docker_image
-            
