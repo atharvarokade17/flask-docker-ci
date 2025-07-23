@@ -49,7 +49,7 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
 
       - run:
-          name: Save metadata for notifications
+          name: Notify via Email
           command: |
             source $BASH_ENV
             echo "CircleCI image tag: $IMAGE_TAG"
