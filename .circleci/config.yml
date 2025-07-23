@@ -61,7 +61,7 @@ jobs:
           webhook_url: $TEAMS_WEBHOOK_URL
           only_on_fail: false
           message: |
-          Docker image **$IMAGE_NAME:$IMAGE_TAG** has been built and pushed successfully.
+            Docker image **$IMAGE_NAME:$IMAGE_TAG** has been built and pushed successfully.
     
 workflows:
   version: 2
