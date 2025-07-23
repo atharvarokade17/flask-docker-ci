@@ -50,13 +50,14 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
 
       - run:
-          name: Prepare Email Content
+          name: Notify via Email
           command: |
             source $BASH_ENV
             echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
             echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
 
-      - ms-teams/report:
+      - run:
+          name: Notify via Microsoft Teams
           webhook_url: $TEAMS_WEBHOOK_URL
           only_on_fail: false
           message: |
