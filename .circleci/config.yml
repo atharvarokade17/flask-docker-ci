@@ -84,4 +84,5 @@ workflows:
           body: "Docker image has been built, pushed to DockerHub, and uploaded to S3."
           requires:
             - build_docker_image
+
             
