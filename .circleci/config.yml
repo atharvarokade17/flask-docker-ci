@@ -1,14 +1,13 @@
 version: 2.1
 
 orbs:
-  aws-s3: circleci/aws-s3@3.0.0
+  aws-s3: circleci/aws-s3@4.1.2
 
 jobs:
   build-and-push:
     docker:
       - image: cimg/base:stable
     
-
     steps:
       - checkout
 
@@ -30,8 +29,8 @@ jobs:
       - aws-s3/copy:
           from: ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
           to: s3://flask-app-builds/${IMAGE_NAME}-$IMAGE_TAG.tar.gz
-          arguments: |
-            --acl private
+          aws-region: ap-south-1
+          acl: private
 
 workflows:
   version: 2
