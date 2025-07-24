@@ -2,16 +2,21 @@ version: 2.1
 
 orbs:
   aws-s3: circleci/aws-s3@4.1.2
+  aws-cli: circleci/aws-cli@4.0.0
 
 jobs:
   build-and-push:
     docker:
       - image: cimg/base:stable
-    
+
     steps:
       - checkout
 
       - setup_remote_docker
+
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
 
       - run:
           name: Set IMAGE_TAG and Build Docker Image
@@ -30,7 +35,7 @@ jobs:
           from: ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
           to: s3://flask-app-builds/${IMAGE_NAME}-$IMAGE_TAG.tar.gz
           arguments: >
-            --acl private --region ap-south-1
+            --acl private
 
 workflows:
   version: 2
