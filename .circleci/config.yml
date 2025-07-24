@@ -1,33 +1,63 @@
 version: 2.1
 
 orbs:
+  email: cinotify/email@1.2.1
+  ms-teams: opub/ms-teams-orb@1.0.3
   aws-s3: circleci/aws-s3@4.1.2
   aws-cli: circleci/aws-cli@5.4.1
 
+parameters:
+  image_tag_date:
+    type: string
+    default: ""
+  email_to:
+    type: string
+    default: "atharvarokade07@gmail.com"
+
 jobs:
-  build-and-push:
+  build_docker_image:
     docker:
       - image: cimg/base:stable
-
+    parameters:
+      image_tag_date:
+        type: string
+        default: ""
     steps:
       - checkout
 
-      - setup_remote_docker
+      - setup_remote_docker:
+          docker_layer_caching: true
 
       - aws-cli/setup
 
       - run:
-          name: Set IMAGE_TAG and Build Docker Image
+          name: Authenticate with DockerHub
           command: |
-            export IMAGE_TAG=$(date +'%Y%m%d')
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+      - run:
+          name: Build Docker image with dynamic date tag
+          command: |
+            if [ -z "<< parameters.image_tag_date >>" ]; then
+              IMAGE_TAG=$(date +'%Y%m%d')
+            else
+              IMAGE_TAG="<< parameters.image_tag_date >>"
+            fi
+            echo "Using image tag: $IMAGE_TAG"
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build --platform linux/amd64 -t ${IMAGE_NAME}:$IMAGE_TAG .
+            docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
+
+      - run:
+          name: Push Docker image
+          command: |
+            source $BASH_ENV
+            docker push $IMAGE_NAME:$IMAGE_TAG
 
       - run:
           name: Save and Compress Docker Image
           command: |
             source $BASH_ENV
-            docker save ${IMAGE_NAME}:$IMAGE_TAG | gzip > ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
+            docker save $IMAGE_NAME:$IMAGE_TAG | gzip > ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
 
       - aws-s3/copy:
           from: ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
@@ -35,9 +65,22 @@ jobs:
           arguments: |
             --acl private
 
+      - ms-teams/report:
+          webhook_url: $TEAMS_WEBHOOK_URL
+          only_on_fail: false
+          message: |
+            ✅ Docker image **$IMAGE_NAME:$IMAGE_TAG** has been built, pushed to DockerHub, and uploaded to S3.
+
 workflows:
   version: 2
-  build:
+  docker_build:
     jobs:
-      - build-and-push
-      
+      - build_docker_image:
+          image_tag_date: "<< pipeline.parameters.image_tag_date >>"
+
+      - email/send:
+          to: "<< pipeline.parameters.email_to >>"
+          subject: "Docker Build Complete"
+          body: "Docker image has been built, pushed to DockerHub, and uploaded to S3."
+          requires:
+            - build_docker_image
