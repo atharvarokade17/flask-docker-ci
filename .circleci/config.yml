@@ -1,14 +1,15 @@
 version: 2.1
 
 orbs:
-  aws-s3: circleci/aws-s3@3.0.0
+  aws-s3: circleci/aws-s3@4.1.2
+
 
 jobs:
   build-and-push:
     docker:
       - image: cimg/base:stable
     environment:
-      IMAGE_NAME: my-app-image
+      IMAGE_NAME: my-flask-image
     steps:
       - checkout
 
@@ -26,7 +27,7 @@ jobs:
 
       - aws-s3/copy:
           from: ${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
-          to: s3://my-app-artifacts/${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
+          to: s3://flask-app-builds/${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
           arguments: |
             --acl private
 
