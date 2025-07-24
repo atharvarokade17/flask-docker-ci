@@ -1,13 +1,15 @@
 version: 2.1
 
 orbs:
-  aws-cli: circleci/aws-cli@5.4.1
-  aws-s3: circleci/aws-s3@4.1.2
+  aws-cli: circleci/aws-cli@4.0.0
+  aws-s3: circleci/aws-s3@3.0.0
 
 jobs:
   build-and-push:
     docker:
-      - image: cimg/base:stable  
+      - image: cimg/base:stable
+    environment:
+      IMAGE_NAME: my-app-image
     steps:
       - checkout
 
@@ -17,19 +19,16 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build -t my-app-image .
+            docker build -t ${IMAGE_NAME}:<< pipeline.git.revision >> .
 
       - run:
           name: Save and Compress Docker Image
           command: |
-            docker save my-app-image | gzip > my-app-image.tar.gz
+            docker save ${IMAGE_NAME}:<< pipeline.git.revision >> | gzip > ${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
 
-      - aws-cli/setup:
-           profile-name: default
-           
       - aws-s3/copy:
-          from: my-app-image.tar.gz
-          to: s3://my-app-artifacts/my-app-image-<< pipeline.git.revision >>.tar.gz
+          from: ${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
+          to: s3://my-app-artifacts/${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
           arguments: |
             --acl private
 
