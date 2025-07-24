@@ -3,32 +3,33 @@ version: 2.1
 orbs:
   aws-s3: circleci/aws-s3@3.0.0
 
-
-
 jobs:
   build-and-push:
     docker:
       - image: cimg/base:stable
-    environment:
-      IMAGE_NAME: my-flask-image
+    
+
     steps:
       - checkout
 
       - setup_remote_docker
 
       - run:
-          name: Build Docker Image
+          name: Set IMAGE_TAG and Build Docker Image
           command: |
-            docker build -t ${IMAGE_NAME}:<< pipeline.git.revision >> .
+            export IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+            docker build -t ${IMAGE_NAME}:$IMAGE_TAG .
 
       - run:
           name: Save and Compress Docker Image
           command: |
-            docker save ${IMAGE_NAME}:<< pipeline.git.revision >> | gzip > ${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
+            source $BASH_ENV
+            docker save ${IMAGE_NAME}:$IMAGE_TAG | gzip > ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
 
       - aws-s3/copy:
-          from: ${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
-          to: s3://flask-app-builds/${IMAGE_NAME}-<< pipeline.git.revision >>.tar.gz
+          from: ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
+          to: s3://flask-app-builds/${IMAGE_NAME}-$IMAGE_TAG.tar.gz
           arguments: |
             --acl private
 
