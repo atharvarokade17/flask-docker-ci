@@ -25,6 +25,7 @@ jobs:
             docker save my-app-image | gzip > my-app-image.tar.gz
 
       - aws-cli/setup:
+           profile-name: default
            
       - aws-s3/copy:
           from: my-app-image.tar.gz
