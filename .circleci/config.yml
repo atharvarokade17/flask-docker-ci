@@ -29,8 +29,8 @@ jobs:
       - aws-s3/copy:
           from: ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
           to: s3://flask-app-builds/${IMAGE_NAME}-$IMAGE_TAG.tar.gz
-          aws-region: ap-south-1
-          acl: private
+          arguments: >
+            --acl private --region ap-south-1
 
 workflows:
   version: 2
