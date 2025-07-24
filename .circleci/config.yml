@@ -17,7 +17,7 @@ jobs:
       - run:
           name: Set IMAGE_TAG and Build Docker Image
           command: |
-            export IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')
+            export IMAGE_TAG=$(date +'%Y%m%d')
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -t ${IMAGE_NAME}:$IMAGE_TAG .
 
@@ -38,4 +38,3 @@ workflows:
   build:
     jobs:
       - build-and-push
-      
