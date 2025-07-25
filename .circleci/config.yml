@@ -1,80 +1,43 @@
 version: 2.1
 
 orbs:
-  email: cinotify/email@1.2.1
-
-parameters:
-  image_tag_date:
-    type: string
-    default: ""
-  email_to:
-    type: string
-    default: ""  
+  aws-s3: circleci/aws-s3@4.1.2
+  aws-cli: circleci/aws-cli@5.4.1
 
 jobs:
-  build_docker_image:
+  build-and-push:
     docker:
       - image: cimg/base:stable
-    parameters:
-      image_tag_date:
-        type: string
-        default: ""
+
     steps:
       - checkout
 
-      - setup_remote_docker:
-          docker_layer_caching: true
+      - setup_remote_docker
+
+      - aws-cli/setup
 
       - run:
-          name: Authenticate with DockerHub
+          name: Set IMAGE_TAG and Build Docker Image
           command: |
-            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-
-      - run:
-          name: Build Docker image with dynamic date tag
-          command: |
-            if [ -z "<< parameters.image_tag_date >>" ]; then
-              IMAGE_TAG=$(date +'%Y%m%d')
-            else
-              IMAGE_TAG="<< parameters.image_tag_date >>"
-            fi
-            echo "Using image tag: $IMAGE_TAG"
+            export IMAGE_TAG=$(date +'%Y%m%d')
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
+            docker build --platform linux/amd64 -t ${IMAGE_NAME}:$IMAGE_TAG .
 
       - run:
-          name: Push Docker image
+          name: Save and Compress Docker Image
           command: |
             source $BASH_ENV
-            docker push $IMAGE_NAME:$IMAGE_TAG
+            docker save ${IMAGE_NAME}:$IMAGE_TAG | gzip > ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
 
-      - run:
-          name: Notify via Email
-          command: |
-            source $BASH_ENV
-            echo "CircleCI image tag: $IMAGE_TAG"
-            echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
-            echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
-
-      - run:
-          name: Notify Microsoft Teams
-          command: |
-            source $BASH_ENV
-            MESSAGE="Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
-            PAYLOAD="{\"text\": \"$MESSAGE\"}"
-            curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
+      - aws-s3/copy:
+          from: ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
+          to: s3://flask-app-builds/${IMAGE_NAME}-$IMAGE_TAG.tar.gz
+          arguments: |
+            --acl private
 
 workflows:
   version: 2
-  docker_build:
+  build:
     jobs:
-      - build_docker_image:
-          image_tag_date: "<< pipeline.parameters.image_tag_date >>"
-
-      - email/send:
-          to: "<< pipeline.parameters.email_to >>"
-          subject: "Docker Build Complete"
-          body: "Docker image has been built and pushed successfully."
-          requires:
-            - build_docker_image
-            
+      - build-and-push
+      
