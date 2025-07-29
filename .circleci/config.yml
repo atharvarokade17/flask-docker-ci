@@ -5,7 +5,21 @@ orbs:
   aws-cli: circleci/aws-cli@5.4.1
 
 jobs:
-  build-and-push:
+  build-push-to-s3:
+    parameters:
+      environ:
+        type: string
+      registry:
+        type: string
+      repository:
+        type: string
+      service:
+        type: string
+      dockerfile:
+        type: string
+      s3bucket:
+        type: string
+
     docker:
       - image: cimg/base:stable
 
@@ -19,25 +33,41 @@ jobs:
       - run:
           name: Set IMAGE_TAG and Build Docker Image
           command: |
-            export IMAGE_TAG=$(date +'%Y%m%d')
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            docker build --platform linux/amd64 -t ${IMAGE_NAME}:$IMAGE_TAG .
+            IMAGE_TAG=$(date +'%Y%m%d')
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> "$BASH_ENV"
+            echo "Tagging image as $IMAGE_TAG"
+            docker build \
+              --tag ${CIRCLE_PARAMETER_registry}/${CIRCLE_PARAMETER_repository}:${CIRCLE_PARAMETER_service}-$IMAGE_TAG \
+              --build-arg BUILD_ENV=${CIRCLE_PARAMETER_environ} \
+              --no-cache \
+              --file ${CIRCLE_PARAMETER_dockerfile} \
+              --platform=linux/amd64 .
 
       - run:
           name: Save and Compress Docker Image
           command: |
             source $BASH_ENV
-            docker save ${IMAGE_NAME}:$IMAGE_TAG | gzip > ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
+            docker save ${CIRCLE_PARAMETER_registry}/${CIRCLE_PARAMETER_repository}:${CIRCLE_PARAMETER_service}-$IMAGE_TAG \
+              | gzip > investedge-${CIRCLE_PARAMETER_service}-$IMAGE_TAG.tar.gz
 
       - aws-s3/copy:
-          from: ${IMAGE_NAME}-$IMAGE_TAG.tar.gz
-          to: s3://flask-app-builds/${IMAGE_NAME}-$IMAGE_TAG.tar.gz
+          from: investedge-web-<< pipeline.parameters.environ >>$(date +'%Y%m%d').tar.gz
+          to: s3://<< parameters.s3bucket >>/investedge-web-<< pipeline.parameters.environ >>$(date +'%Y%m%d').tar.gz
           arguments: |
             --acl private
 
 workflows:
-  version: 2
-  build:
+  axis-dev-workflows:
     jobs:
-      - build-and-push
-      
+      - build-push-to-s3:
+          environ: development
+          registry: beyondirraxis
+          repository: tech
+          service: web
+          dockerfile: Dockerfile.birr
+          s3bucket: registry.enterprise
+          filters:
+            branches:
+              only: ci-dev
+          context:
+            - BIRR_AWS_S3_REGISTRY_CREDS
