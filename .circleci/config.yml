@@ -31,14 +31,10 @@ jobs:
       - aws-cli/setup
 
       - run:
-          name: Set IMAGE_TAG
+          name: Set IMAGE_TAG and Build Docker Image
           command: |
             export IMAGE_TAG=$(date +'%Y%m%d')
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-
-      - run:
-          name: Build Docker Image
-          command: |
             source $BASH_ENV
             docker build \
               --tag "<< parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG" \
