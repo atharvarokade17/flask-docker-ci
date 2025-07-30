@@ -1,65 +1,42 @@
 version: 2.1
- 
-orbs:
-  aws-cli: circleci/aws-cli@5.4.1
- 
+
 jobs:
-  build-push-to-s3:
-    parameters:
-      environ:
-        type: string
-      registry:
-        type: string
-      repository:
-        type: string
-      service:
-        type: string
-      dockerfile:
-        type: string
-      s3bucket:
-        type: string
- 
+  build-and-push-dockerhub:
     docker:
       - image: cimg/base:stable
- 
+    environment:
+      IMAGE_TAG: latest
     steps:
       - checkout
-      - setup_remote_docker
-      - aws-cli/setup
+
+      - setup_remote_docker:
+          
       - run:
-          name: Set IMAGE_TAG and Build Docker Image
+          name: Build Docker image
           command: |
-            export IMAGE_TAG=$(date +'%Y%m%d')
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-            source $BASH_ENV
-            docker build --build-arg BUILD_ENV=<< parameters.environ >> \
-              --tag << parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG \
-              --no-cache --file << parameters.dockerfile >> --platform=linux/amd64 .
+            docker build -t $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG .
+
       - run:
-          name: Save and Compress Docker Image
+          name: Log in to Docker Hub
           command: |
-            source $BASH_ENV
-            docker save << parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG \
-            | gzip > investedge-<< parameters.service >>-$IMAGE_TAG.tar.gz
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
       - run:
-          name: Upload Docker Image to S3
+          name: Push Docker image
           command: |
-            source $BASH_ENV
-            aws s3 cp investedge-<< parameters.service >>-$IMAGE_TAG.tar.gz \
-            s3://<< parameters.s3bucket >>/ --acl private
- 
+            docker push $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG
+
+      - run:
+          name: Send Email Notification via Cinotify
+          command: |
+            curl --request POST 'https://www.cinotify.cc/api/notify' \
+              --header "Content-Type: application/x-www-form-urlencoded" \
+              --data-urlencode "to=$EMAIL_RECIPIENTS" \
+              --data-urlencode "subject=Docker Image Pushed Successfully" \
+              --data-urlencode "body=<body><p>Hello Team,</p><p>The Docker image has been successfully built and pushed to Docker Hub:</p><ul><li><strong>Branch:</strong> $CIRCLE_BRANCH</li><li><strong>Image:</strong> $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG</li><li><strong>Registry:</strong> $DOCKER_REGISTRY</li><li><strong>Build URL:</strong> <a href='$CIRCLE_BUILD_URL'>$CIRCLE_BUILD_URL</a></li></ul><p>Best regards,<br><em>CircleCI Bot</em></p></body>" \
+              --data-urlencode "type=text/html"
+
 workflows:
-  axis-dev-workflows:
+  build-and-notify:
     jobs:
-      - build-push-to-s3:
-          environ: development
-          registry: beyondirraxis
-          repository: tech
-          service: web
-          dockerfile: Dockerfile
-          s3bucket: demo-bucket-atharva
-          #filters:
-            #branches:
-              #only: ci-dev
-          context:
-            - BIRR_AWS_S3_REGISTRY_CREDS
+      - build-and-push-dockerhub
