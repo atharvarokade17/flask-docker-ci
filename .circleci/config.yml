@@ -9,10 +9,8 @@ jobs:
     steps:
       - checkout
 
-      - setup_remote_docker:
-          version: 20.10.7
-          docker_layer_caching: true
-          
+      - setup_remote_docker  
+
       - run:
           name: Build Docker image
           command: |
@@ -34,11 +32,12 @@ jobs:
             curl --request POST 'https://www.cinotify.cc/api/notify' \
               --header "Content-Type: application/x-www-form-urlencoded" \
               --data-urlencode "to=$EMAIL_RECIPIENTS" \
-              --data-urlencode "subject=Docker Image Pushed Successfully" \
-              --data-urlencode "body=<body><p>Hello Team,</p><p>The Docker image has been successfully built and pushed to Docker Hub:</p><ul><li><strong>Branch:</strong> $CIRCLE_BRANCH</li><li><strong>Image:</strong> $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG</li><li><strong>Registry:</strong> $DOCKER_REGISTRY</li><li><strong>Build URL:</strong> <a href='$CIRCLE_BUILD_URL'>$CIRCLE_BUILD_URL</a></li></ul><p>Best regards,<br><em>CircleCI Bot</em></p></body>" \
+              --data-urlencode "subject= Docker Image Pushed Successfully" \
+              --data-urlencode "body=<body><p>Hello Team,</p><p>The Docker image has been successfully built and pushed to Docker Hub:</p><ul><li><strong>Branch:</strong> $CIRCLE_BRANCH</li><li><strong>Image:</strong> $DOCKERHUB_USERNAME/$IMAGE_NAME:$IMAGE_TAG</li><li><strong>Build URL:</strong> <a href='$CIRCLE_BUILD_URL'>$CIRCLE_BUILD_URL</a></li></ul><p>Best regards,<br><em>CircleCI Bot</em></p></body>" \
               --data-urlencode "type=text/html"
 
 workflows:
+  version: 2
   build-and-notify:
     jobs:
       - build-and-push-dockerhub
