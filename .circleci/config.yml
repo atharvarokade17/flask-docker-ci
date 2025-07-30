@@ -30,6 +30,7 @@ jobs:
           name: Set IMAGE_TAG and Build Docker Image
           command: |
             export IMAGE_TAG=$(date +'%Y%m%d')
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             source $BASH_ENV
             docker build --build-arg BUILD_ENV=<< parameters.environ >> \
               --tag << parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG \
@@ -45,7 +46,7 @@ jobs:
           command: |
             source $BASH_ENV
             aws s3 cp investedge-<< parameters.service >>-$IMAGE_TAG.tar.gz \
-            s3://<< parameters.s3bucket >>/investedge-<< parameters.service >>-$IMAGE_TAG.tar.gz \ --acl private
+            s3://<< parameters.s3bucket >>/ --acl private
  
 workflows:
   axis-dev-workflows:
