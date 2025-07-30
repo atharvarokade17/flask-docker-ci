@@ -1,9 +1,8 @@
 version: 2.1
-
+ 
 orbs:
-  
   aws-cli: circleci/aws-cli@5.4.1
-
+ 
 jobs:
   build-push-to-s3:
     parameters:
@@ -19,49 +18,35 @@ jobs:
         type: string
       s3bucket:
         type: string
-
+ 
     docker:
       - image: cimg/base:stable
-
+ 
     steps:
       - checkout
-
       - setup_remote_docker
-
       - aws-cli/setup
-
       - run:
-          name: Set IMAGE_TAG
+          name: Set IMAGE_TAG and Build Docker Image
           command: |
             export IMAGE_TAG=$(date +'%Y%m%d')
-            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
-
-      - run:
-          name: Build Docker Image
-          command: |
             source $BASH_ENV
-            docker build \
-              --tag "<< parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG" \
-              --build-arg BUILD_ENV=<< parameters.environ >> \
-              --no-cache \
-              --file << parameters.dockerfile >> \
-              --platform=linux/amd64 .
-
+            docker build --build-arg BUILD_ENV=<< parameters.environ >> \
+              --tag << parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG \
+              --no-cache --file << parameters.dockerfile >> --platform=linux/amd64 .
       - run:
           name: Save and Compress Docker Image
           command: |
             source $BASH_ENV
-            docker save "<< parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG" \
+            docker save << parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG \
             | gzip > investedge-<< parameters.service >>-$IMAGE_TAG.tar.gz
-
       - run:
           name: Upload Docker Image to S3
           command: |
             source $BASH_ENV
             aws s3 cp investedge-<< parameters.service >>-$IMAGE_TAG.tar.gz \
-              s3://<< parameters.s3bucket >>/investedge-<< parameters.service >>-$IMAGE_TAG.tar.gz \
-              --acl private
-
+            s3://<< parameters.s3bucket >>/ --acl private
+ 
 workflows:
   axis-dev-workflows:
     jobs:
