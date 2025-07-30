@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  aws-s3: circleci/aws-s3@4.1.2
+  
   aws-cli: circleci/aws-cli@5.4.1
 
 jobs:
@@ -31,10 +31,14 @@ jobs:
       - aws-cli/setup
 
       - run:
-          name: Set IMAGE_TAG and Build Docker Image
+          name: Set IMAGE_TAG
           command: |
             export IMAGE_TAG=$(date +'%Y%m%d')
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+
+      - run:
+          name: Build Docker Image
+          command: |
             source $BASH_ENV
             docker build \
               --tag "<< parameters.registry >>/<< parameters.repository >>:<< parameters.service >>-$IMAGE_TAG" \
@@ -73,8 +77,3 @@ workflows:
               #only: ci-dev
           context:
             - BIRR_AWS_S3_REGISTRY_CREDS
-
-        
-
-
-        
