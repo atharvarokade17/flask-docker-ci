@@ -70,8 +70,8 @@ workflows:
           registry: beyondirraxis
           repository: tech
           service: web
-          dockerfile: Dockerfile.birr
-          s3bucket: registry.enterprise
+          dockerfile: Dockerfile
+          s3bucket: demo-bucket-atharva
           #filters:
             #branches:
               #only: ci-dev
