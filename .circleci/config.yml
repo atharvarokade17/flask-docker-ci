@@ -9,30 +9,41 @@ jobs:
   build_docker_image:
     docker:
       - image: cimg/base:stable
+    parameters:
+      image_tag_date:
+        type: string
+        default: ""
     steps:
       - checkout
+
       - setup_remote_docker:
           docker_layer_caching: true
+
       - run:
-          name: Docker Login
-          command: echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          name: Authenticate with DockerHub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
       - run:
-          name: Build Docker image
+          name: Build Docker image with dynamic date tag
           command: |
             if [ -z "<< parameters.image_tag_date >>" ]; then
               IMAGE_TAG=$(date +'%Y%m%d')
             else
               IMAGE_TAG="<< parameters.image_tag_date >>"
             fi
+            echo "Using image tag: $IMAGE_TAG"
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
+
       - run:
           name: Push Docker image
           command: |
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
+
       - run:
-          name: Notify Teams
+          name: Notify Microsoft Teams
           command: |
             source $BASH_ENV
             MESSAGE="Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
@@ -40,6 +51,7 @@ jobs:
             curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
 
 workflows:
+  version: 2
   docker_build:
     jobs:
       - build_docker_image:
