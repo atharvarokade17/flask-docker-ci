@@ -43,12 +43,44 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
 
       - run:
-          name: Notify Microsoft Teams
+          name: Notify Microsoft Teams on success
           command: |
             source $BASH_ENV
-            MESSAGE="Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
-            PAYLOAD="{\"text\": \"$MESSAGE\"}"
-            curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
+            curl -H 'Content-Type: application/json' \
+              -d "{
+                    \"@type\": \"MessageCard\",
+                    \"@context\": \"http://schema.org/extensions\",
+                    \"summary\": \"CircleCI Docker Build\",
+                    \"themeColor\": \"0076D7\",
+                    \"title\": \"✅ Docker Image Built & Pushed\",
+                    \"sections\": [{
+                      \"activityTitle\": \"${CIRCLE_PROJECT_REPONAME}\",
+                      \"activitySubtitle\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH}\",
+                      \"facts\": [
+                        {\"name\": \"Image\", \"value\": \"${IMAGE_NAME}:${IMAGE_TAG}\"},
+                        {\"name\": \"Commit\", \"value\": \"${CIRCLE_SHA1}\"}
+                      ]
+                    }]
+                  }" \
+              $TEAMS_WEBHOOK_URL
+
+      - run:
+          name: Notify Microsoft Teams on failure
+          when: on_fail
+          command: |
+            curl -H 'Content-Type: application/json' \
+              -d "{
+                    \"@type\": \"MessageCard\",
+                    \"@context\": \"http://schema.org/extensions\",
+                    \"summary\": \"CircleCI Docker Build\",
+                    \"themeColor\": \"FF0000\",
+                    \"title\": \"❌ Docker Build Failed\",
+                    \"sections\": [{
+                      \"activityTitle\": \"${CIRCLE_PROJECT_REPONAME}\",
+                      \"activitySubtitle\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH}\"
+                    }]
+                  }" \
+              $TEAMS_WEBHOOK_URL
 
 workflows:
   version: 2
