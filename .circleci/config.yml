@@ -28,36 +28,38 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      # Success notification (green theme)
+      # Success notification (green theme, separate sections)
       - run:
           name: Notify Microsoft Teams on success
           command: |
-            curl -H 'Content-Type: application/json' \
-              -d "{
-                    \"@type\": \"MessageCard\",
-                    \"@context\": \"http://schema.org/extensions\",
-                    \"summary\": \"Docker Build Success\",
-                    \"themeColor\": \"00FF00\",
-                    \"title\": \"✅ Docker Build Success\",
-                    \"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\nJob Number ${CIRCLE_BUILD_NUM}\"
-                  }" \
-              $TEAMS_WEBHOOK_URL
+            curl -H 'Content-Type: application/json' -d "{
+              \"@type\": \"MessageCard\",
+              \"@context\": \"http://schema.org/extensions\",
+              \"summary\": \"Docker Build Success\",
+              \"themeColor\": \"00FF00\",
+              \"title\": \"✅ Docker Build Success\",
+              \"sections\": [
+                {\"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\"},
+                {\"text\": \"Job Number ${CIRCLE_BUILD_NUM}\"}
+              ]
+            }" $TEAMS_WEBHOOK_URL
 
-      # Failure notification (red theme)
+      # Failure notification (red theme, separate sections)
       - run:
           name: Notify Microsoft Teams on failure
           when: on_fail
           command: |
-            curl -H 'Content-Type: application/json' \
-              -d "{
-                    \"@type\": \"MessageCard\",
-                    \"@context\": \"http://schema.org/extensions\",
-                    \"summary\": \"Docker Build Failed\",
-                    \"themeColor\": \"FF0000\",
-                    \"title\": \"❌ Docker Build Failed\",
-                    \"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\nJob Number ${CIRCLE_BUILD_NUM}\"
-                  }" \
-              $TEAMS_WEBHOOK_URL
+            curl -H 'Content-Type: application/json' -d "{
+              \"@type\": \"MessageCard\",
+              \"@context\": \"http://schema.org/extensions\",
+              \"summary\": \"Docker Build Failed\",
+              \"themeColor\": \"FF0000\",
+              \"title\": \"❌ Docker Build Failed\",
+              \"sections\": [
+                {\"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\"},
+                {\"text\": \"Job Number ${CIRCLE_BUILD_NUM}\"}
+              ]
+            }" $TEAMS_WEBHOOK_URL
 
 workflows:
   version: 2
