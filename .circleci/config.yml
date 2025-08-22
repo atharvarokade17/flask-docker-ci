@@ -28,7 +28,7 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      # Success notification (simplified)
+      
       - run:
           name: Notify Microsoft Teams on success
           command: |
@@ -39,11 +39,14 @@ jobs:
                     \"summary\": \"Docker Build Success\",
                     \"themeColor\": \"0076D7\",
                     \"title\": \"✅ Docker Image Built & Pushed\",
-                    \"text\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH} finished successfully.\"
+                    \"sections\": [{
+                      \"activityTitle\": \"${CIRCLE_PROJECT_REPONAME}\",
+                      \"activitySubtitle\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH}\"
+                    }]
                   }" \
               $TEAMS_WEBHOOK_URL
 
-      # Failure notification (simplified)
+      
       - run:
           name: Notify Microsoft Teams on failure
           when: on_fail
@@ -55,7 +58,10 @@ jobs:
                     \"summary\": \"Docker Build Failed\",
                     \"themeColor\": \"FF0000\",
                     \"title\": \"❌ Docker Build Failed\",
-                    \"text\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH} failed.\"
+                    \"sections\": [{
+                      \"activityTitle\": \"${CIRCLE_PROJECT_REPONAME}\",
+                      \"activitySubtitle\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH}\"
+                    }]
                   }" \
               $TEAMS_WEBHOOK_URL
 
