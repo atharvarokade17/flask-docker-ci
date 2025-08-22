@@ -28,40 +28,34 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      # Single Teams notification for both success and failure
+      # Success notification (simplified)
       - run:
-          name: Notify Microsoft Teams
+          name: Notify Microsoft Teams on success
           command: |
-            set +e  # Allow the script to continue even if previous steps failed
-            if [ "$CIRCLE_JOB" == "build_docker_image" ]; then
-              STATUS="success"
-              COLOR="0076D7"
-              TITLE="✅ Docker Image Built & Pushed"
-              MESSAGE="Docker image ${IMAGE_NAME}:${IMAGE_TAG} built & pushed"
-            fi
-
-            if [ "${CIRCLE_JOB_STATUS}" != "success" ]; then
-              STATUS="failure"
-              COLOR="FF0000"
-              TITLE="❌ Docker Build Failed"
-              MESSAGE="Docker build failed"
-            fi
-
             curl -H 'Content-Type: application/json' \
               -d "{
                     \"@type\": \"MessageCard\",
                     \"@context\": \"http://schema.org/extensions\",
-                    \"summary\": \"Docker Build Notification\",
-                    \"themeColor\": \"$COLOR\",
-                    \"title\": \"$TITLE\",
-                    \"sections\": [{
-                      \"activityTitle\": \"${CIRCLE_PROJECT_REPONAME}\",
-                      \"activitySubtitle\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH}\",
-                      \"facts\": [
-                        {\"name\": \"Message\", \"value\": \"$MESSAGE\"},
-                        {\"name\": \"Commit\", \"value\": \"${CIRCLE_SHA1}\"}
-                      ]
-                    }]
+                    \"summary\": \"Docker Build Success\",
+                    \"themeColor\": \"0076D7\",
+                    \"title\": \"✅ Docker Image Built & Pushed\",
+                    \"text\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH} finished successfully.\"
+                  }" \
+              $TEAMS_WEBHOOK_URL
+
+      # Failure notification (simplified)
+      - run:
+          name: Notify Microsoft Teams on failure
+          when: on_fail
+          command: |
+            curl -H 'Content-Type: application/json' \
+              -d "{
+                    \"@type\": \"MessageCard\",
+                    \"@context\": \"http://schema.org/extensions\",
+                    \"summary\": \"Docker Build Failed\",
+                    \"themeColor\": \"FF0000\",
+                    \"title\": \"❌ Docker Build Failed\",
+                    \"text\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH} failed.\"
                   }" \
               $TEAMS_WEBHOOK_URL
 
