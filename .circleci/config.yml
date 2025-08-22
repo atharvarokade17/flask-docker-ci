@@ -44,10 +44,28 @@ jobs:
 
       - run:
           name: Notify Microsoft Teams
+          when: always
           command: |
             source $BASH_ENV
-            MESSAGE="Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
+
+            # Collect metadata
+            BUILD_NUM="#${CIRCLE_BUILD_NUM}"
+            JOB_NAME="$CIRCLE_JOB"
+            BRANCH="$CIRCLE_BRANCH"
+            AUTHOR="$CIRCLE_USERNAME"
+            COMMIT_MSG=$(git log -1 --pretty=%B $CIRCLE_SHA1)
+
+            # Determine status
+            if [ "$CIRCLE_JOB" = "build_docker_image" ] && [ "$CIRCLE_WORKFLOW_STATUS" = "success" ]; then
+              STATUS="SUCCESS"
+            else
+              STATUS="FAILURE"
+            fi
+
+            # Final message
+            MESSAGE="${STATUS} flask-docker-ci ${BUILD_NUM}\nJob\n${JOB_NAME}\nBranch\n${BRANCH}\nAuthor\n${AUTHOR}\nCommit\nMessage\nDocker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully.\n${COMMIT_MSG}"
             PAYLOAD="{\"text\": \"$MESSAGE\"}"
+
             curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
 
 workflows:
