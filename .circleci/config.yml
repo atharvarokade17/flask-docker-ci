@@ -61,8 +61,8 @@ jobs:
             SHORT_SHA=$(echo $CIRCLE_SHA1 | cut -c1-7)
             COMMIT_MSG=$(git log -1 --pretty=%B $CIRCLE_SHA1)
 
-            # Teams requires escaped newlines (\\n)
-            MESSAGE="${STATUS} flask-docker-ci ${BUILD_NUM}\\nJob\\n${JOB_NAME}\\nBranch\\n${BRANCH}\\nAuthor\\n${AUTHOR}\\nCommit ${SHORT_SHA}\\nMessage\\nDocker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully.\\n${COMMIT_MSG}"
+            # Teams requires double-escaped newlines (\\\\n)
+            MESSAGE="${STATUS} flask-docker-ci ${BUILD_NUM}\\\\nJob\\\\n${JOB_NAME}\\\\nBranch\\\\n${BRANCH}\\\\nAuthor\\\\n${AUTHOR}\\\\nCommit ${SHORT_SHA}\\\\nMessage\\\\nDocker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully.\\\\n${COMMIT_MSG}"
             PAYLOAD="{\"text\": \"$MESSAGE\"}"
 
             curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
