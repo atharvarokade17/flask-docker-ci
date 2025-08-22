@@ -39,8 +39,8 @@ jobs:
               \"themeColor\": \"00FF00\",
               \"title\": \"✅ Docker Build Success\",
               \"sections\": [
-                {\"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"Job Number ${CIRCLE_BUILD_NUM}\"}
+                {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
+                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}
               ]
             }" $TEAMS_WEBHOOK_URL
 
@@ -56,8 +56,8 @@ jobs:
               \"themeColor\": \"FF0000\",
               \"title\": \"❌ Docker Build Failed\",
               \"sections\": [
-                {\"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"Job Number ${CIRCLE_BUILD_NUM}\"}
+                {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
+                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}
               ]
             }" $TEAMS_WEBHOOK_URL
 
