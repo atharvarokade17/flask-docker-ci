@@ -28,7 +28,6 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      # Success notification (green theme, separate sections)
       - run:
           name: Notify Microsoft Teams on success
           command: |
@@ -44,7 +43,6 @@ jobs:
               ]
             }" $TEAMS_WEBHOOK_URL
 
-      # Failure notification (red theme, separate sections)
       - run:
           name: Notify Microsoft Teams on failure
           when: on_fail
