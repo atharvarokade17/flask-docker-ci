@@ -9,10 +9,6 @@ jobs:
   build_docker_image:
     docker:
       - image: cimg/base:stable
-    parameters:
-      image_tag_date:
-        type: string
-        default: ""
     steps:
       - checkout
 
@@ -44,10 +40,40 @@ jobs:
 
       - run:
           name: Notify Microsoft Teams
+          when: always
           command: |
             source $BASH_ENV
-            MESSAGE="Docker image *$IMAGE_NAME:$IMAGE_TAG* has been built and pushed successfully."
-            PAYLOAD="{\"text\": \"$MESSAGE\"}"
+            BUILD_URL="https://app.circleci.com/pipelines/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/$CIRCLE_BUILD_NUM"
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+
+            PAYLOAD=$(cat <<EOF
+            {
+              "@type": "MessageCard",
+              "@context": "https://schema.org/extensions",
+              "themeColor": "0076D7",
+              "summary": "Docker Build Notification",
+              "sections": [{
+                "activityTitle": "**SUCCESS** flask-docker-ci #$CIRCLE_BUILD_NUM",
+                "facts": [
+                  { "name": "Job", "value": "$CIRCLE_JOB" },
+                  { "name": "Branch", "value": "$CIRCLE_BRANCH" },
+                  { "name": "Author", "value": "$AUTHOR_EMAIL" },
+                  { "name": "Commit", "value": "$CIRCLE_SHA1" },
+                  { "name": "Message", "value": "✅ Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed successfully." },
+                  { "name": "Commit Message", "value": "$COMMIT_MSG" }
+                ],
+                "markdown": true
+              }],
+              "potentialAction": [{
+                "@type": "OpenUri",
+                "name": "View Pipeline",
+                "targets": [{ "os": "default", "uri": "$BUILD_URL" }]
+              }]
+            }
+            EOF
+            )
+
             curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
 
 workflows:
