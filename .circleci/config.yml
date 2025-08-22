@@ -1,7 +1,14 @@
 version: 2.1
 
+orbs:
+  email: cinotify/email@1.2.1
+  ms-teams: opub/ms-teams-orb@1.0.3
+
 parameters:
   image_tag_date:
+    type: string
+    default: ""
+  email_to:
     type: string
     default: ""
 
@@ -9,6 +16,10 @@ jobs:
   build_docker_image:
     docker:
       - image: cimg/base:stable
+    parameters:
+      image_tag_date:
+        type: string
+        default: ""
     steps:
       - checkout
 
@@ -39,42 +50,17 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
 
       - run:
-          name: Notify Microsoft Teams
-          when: always
+          name: Prepare Email Variables
           command: |
             source $BASH_ENV
-            BUILD_URL="https://app.circleci.com/pipelines/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/$CIRCLE_BUILD_NUM"
-            COMMIT_MSG=$(git log -1 --pretty=%B)
-            AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
+            echo "export EMAIL_SUBJECT=\"Docker Build Complete: $IMAGE_TAG\"" >> $BASH_ENV
+            echo "export EMAIL_BODY=\"Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed.\"" >> $BASH_ENV
 
-            PAYLOAD=$(cat <<EOF
-            {
-              "@type": "MessageCard",
-              "@context": "https://schema.org/extensions",
-              "themeColor": "0076D7",
-              "summary": "Docker Build Notification",
-              "sections": [{
-                "activityTitle": "**SUCCESS** flask-docker-ci #$CIRCLE_BUILD_NUM",
-                "facts": [
-                  { "name": "Job", "value": "$CIRCLE_JOB" },
-                  { "name": "Branch", "value": "$CIRCLE_BRANCH" },
-                  { "name": "Author", "value": "$AUTHOR_EMAIL" },
-                  { "name": "Commit", "value": "$CIRCLE_SHA1" },
-                  { "name": "Message", "value": "✅ Docker image $IMAGE_NAME:$IMAGE_TAG has been built and pushed successfully." },
-                  { "name": "Commit Message", "value": "$COMMIT_MSG" }
-                ],
-                "markdown": true
-              }],
-              "potentialAction": [{
-                "@type": "OpenUri",
-                "name": "View Pipeline",
-                "targets": [{ "os": "default", "uri": "$BUILD_URL" }]
-              }]
-            }
-            EOF
-            )
-
-            curl -H "Content-Type: application/json" -d "$PAYLOAD" "$TEAMS_WEBHOOK_URL"
+      - ms-teams/report:
+          webhook_url: $TEAMS_WEBHOOK_URL
+          only_on_fail: false
+          message: |
+            Docker image **$IMAGE_NAME:$IMAGE_TAG** has been built and pushed successfully.
 
 workflows:
   version: 2
@@ -82,3 +68,13 @@ workflows:
     jobs:
       - build_docker_image:
           image_tag_date: "<< pipeline.parameters.image_tag_date >>"
+
+      - email/send:
+          to: "<< pipeline.parameters.email_to >>"
+          subject: "Docker Build Complete"
+          body: "Docker image has been built and pushed successfully."
+          requires:
+            - build_docker_image
+
+
+      
