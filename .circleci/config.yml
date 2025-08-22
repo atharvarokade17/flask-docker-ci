@@ -28,7 +28,7 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      
+      # Success notification (green theme)
       - run:
           name: Notify Microsoft Teams on success
           command: |
@@ -37,16 +37,13 @@ jobs:
                     \"@type\": \"MessageCard\",
                     \"@context\": \"http://schema.org/extensions\",
                     \"summary\": \"Docker Build Success\",
-                    \"themeColor\": \"0076D7\",
-                    \"title\": \"✅ Docker Image Built & Pushed\",
-                    \"sections\": [{
-                      \"activityTitle\": \"${CIRCLE_PROJECT_REPONAME}\",
-                      \"activitySubtitle\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH}\"
-                    }]
+                    \"themeColor\": \"00FF00\",
+                    \"title\": \"✅ Docker Build Success\",
+                    \"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\nJob Number ${CIRCLE_BUILD_NUM}\"
                   }" \
               $TEAMS_WEBHOOK_URL
 
-      
+      # Failure notification (red theme)
       - run:
           name: Notify Microsoft Teams on failure
           when: on_fail
@@ -58,10 +55,7 @@ jobs:
                     \"summary\": \"Docker Build Failed\",
                     \"themeColor\": \"FF0000\",
                     \"title\": \"❌ Docker Build Failed\",
-                    \"sections\": [{
-                      \"activityTitle\": \"${CIRCLE_PROJECT_REPONAME}\",
-                      \"activitySubtitle\": \"Build #${CIRCLE_BUILD_NUM} on branch ${CIRCLE_BRANCH}\"
-                    }]
+                    \"text\": \"Project ${CIRCLE_PROJECT_REPONAME}\nJob Number ${CIRCLE_BUILD_NUM}\"
                   }" \
               $TEAMS_WEBHOOK_URL
 
