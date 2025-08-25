@@ -34,6 +34,7 @@ jobs:
             curl -H 'Content-Type: application/json' -d "{
               \"@type\": \"MessageCard\",
               \"@context\": \"http://schema.org/extensions\",
+              \"summary\": \"Docker Build Success\",
               \"themeColor\": \"00FF00\",
               \"title\": \"✅ Docker Build Success\",
               \"sections\": [
@@ -50,6 +51,7 @@ jobs:
             curl -H 'Content-Type: application/json' -d "{
               \"@type\": \"MessageCard\",
               \"@context\": \"http://schema.org/extensions\",
+              \"summary\": \"Docker Build Failed\",
               \"themeColor\": \"FF0000\",
               \"title\": \"❌ Docker Build Failed\",
               \"sections\": [
