@@ -43,7 +43,12 @@ jobs:
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
                 {\"text\": \"**Repository**  ${IMAGE_NAME}\"},
                 {\"text\": \"**Message**  The Docker image was built and pushed successfully.\"}
-              ]
+              ],
+              \"potentialAction\": [{
+                \"@type\": \"OpenUri\",
+                \"name\": \"View Job in CircleCI\",
+                \"targets\": [{ \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }]
+              }]
             }" $TEAMS_WEBHOOK_URL
 
       - run:
@@ -62,7 +67,12 @@ jobs:
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
                 {\"text\": \"**Repository**  ${IMAGE_NAME}\"},
                 {\"text\": \"**Message**  The build failed. Please check CircleCI logs.\"}
-              ]
+              ],
+              \"potentialAction\": [{
+                \"@type\": \"OpenUri\",
+                \"name\": \"View Job in CircleCI\",
+                \"targets\": [{ \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }]
+              }]
             }" $TEAMS_WEBHOOK_URL
 
 workflows:
