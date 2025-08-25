@@ -43,7 +43,6 @@ jobs:
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
                 {\"text\": \"**Repository**  ${IMAGE_NAME}\"},
                 {\"text\": \"**Message**  The Docker image was built and pushed successfully.\"},
-                {\"text\": \"[View Job in CircleCI](${CIRCLE_BUILD_URL})\"}
               ],
               \"potentialAction\": [
                 {
@@ -70,7 +69,6 @@ jobs:
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
                 {\"text\": \"**Repository**  ${IMAGE_NAME}\"},
                 {\"text\": \"**Message**  The build failed. Please check CircleCI logs.\"},
-                {\"text\": \"[View Job in CircleCI](${CIRCLE_BUILD_URL})\"}
               ],
               \"potentialAction\": [
                 {
