@@ -34,12 +34,12 @@ jobs:
             curl -H 'Content-Type: application/json' -d "{
               \"@type\": \"MessageCard\",
               \"@context\": \"http://schema.org/extensions\",
-              \"summary\": \"Docker Build Success\",
               \"themeColor\": \"00FF00\",
               \"title\": \"✅ Docker Build Success\",
               \"sections\": [
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}
+                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"},
+                {\"text\": \"**Message**  The Docker image was built and pushed successfully.\"}
               ]
             }" $TEAMS_WEBHOOK_URL
 
@@ -50,12 +50,12 @@ jobs:
             curl -H 'Content-Type: application/json' -d "{
               \"@type\": \"MessageCard\",
               \"@context\": \"http://schema.org/extensions\",
-              \"summary\": \"Docker Build Failed\",
               \"themeColor\": \"FF0000\",
               \"title\": \"❌ Docker Build Failed\",
               \"sections\": [
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}
+                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}.
+                {\"text\": \"**Message**  The build failed. Please check CircleCI logs.\"}
               ]
             }" $TEAMS_WEBHOOK_URL
 
