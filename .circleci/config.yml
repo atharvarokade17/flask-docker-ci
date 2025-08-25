@@ -41,6 +41,7 @@ jobs:
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
                 {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"},
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
+                {\"text\": \"**Repository**  ${IMAGE_NAME}\"},
                 {\"text\": \"**Message**  The Docker image was built and pushed successfully.\"}
               ]
             }" $TEAMS_WEBHOOK_URL
@@ -59,6 +60,7 @@ jobs:
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
                 {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"},
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
+                {\"text\": \"**Repository**  ${IMAGE_NAME}\"},
                 {\"text\": \"**Message**  The build failed. Please check CircleCI logs.\"}
               ]
             }" $TEAMS_WEBHOOK_URL
