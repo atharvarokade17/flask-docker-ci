@@ -17,7 +17,7 @@ commands:
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
-          when: <<# parameters.on_fail >>on_fail<</ parameters.on_fail >><<^ parameters.on_fail >>always<</ parameters.on_fail >>
+          #when: <<# parameters.on_fail >>on_fail<</ parameters.on_fail >><<^ parameters.on_fail >>always<</ parameters.on_fail >>
           command: |
             curl -H 'Content-Type: application/json' -d "{
               \"@type\": \"MessageCard\",
