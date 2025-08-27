@@ -22,7 +22,7 @@ commands:
             curl -H 'Content-Type: application/json' -d "{
               \"@type\": \"MessageCard\",
               \"@context\": \"http://schema.org/extensions\",
-              \"summary\": \"Docker Build << parameters.status >>\",
+              \"summary\": \"<< parameters.status >>\",
               \"themeColor\": \"<< parameters.color >>\",
               \"title\": \"<< parameters.title >>\",
               \"sections\": [
