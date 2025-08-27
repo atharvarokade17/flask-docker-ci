@@ -67,7 +67,7 @@ jobs:
           name: Push Docker image
           command: |
             source $BASH_ENV
-            docker pus $IMAGE_NAME:$IMAGE_TAG
+            docker push $IMAGE_NAME:$IMAGE_TAG
 
       - notify_teams:
           status: "Success"
