@@ -11,12 +11,13 @@ commands:
         type: string
       message:
         type: string
-      on_fail:
-        type: boolean
-        default: false
+      condition:
+        type: string
+        default: "always"   # can be: always, on_fail, on_success
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
+          when: << parameters.condition >>
           command: |
             curl -H 'Content-Type: application/json' -d "{
               \"@type\": \"MessageCard\",
@@ -74,6 +75,7 @@ jobs:
           color: "00FF00"
           title: "✅ Docker Build Success"
           message: "The Docker image was built and pushed successfully."
+          condition: on_success
 
       # failure notification
       - notify_teams:
@@ -81,11 +83,10 @@ jobs:
           color: "FF0000"
           title: "❌ Docker Build Failed"
           message: "The build failed. Please check CircleCI logs."
-          on_fail: true
+          condition: on_fail
 
 workflows:
   version: 2
   docker_build:
     jobs:
       - build_docker_image
-      
