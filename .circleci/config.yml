@@ -13,7 +13,7 @@ commands:
         type: string
       condition:
         type: string
-        default: "always"  
+        default: "always"
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
