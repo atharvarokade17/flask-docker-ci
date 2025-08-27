@@ -88,5 +88,3 @@ workflows:
   docker_build:
     jobs:
       - build_docker_image
-
-  
