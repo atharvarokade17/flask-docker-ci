@@ -13,7 +13,7 @@ commands:
         type: string
       condition:
         type: string
-        default: "always"   # can be: always, on_fail, on_success
+        default: "always"  
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
@@ -69,7 +69,6 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      # success notification
       - notify_teams:
           status: "Success"
           color: "00FF00"
@@ -77,7 +76,6 @@ jobs:
           message: "The Docker image was built and pushed successfully."
           condition: on_success
 
-      # failure notification
       - notify_teams:
           status: "Failed"
           color: "FF0000"
