@@ -45,6 +45,9 @@ commands:
       job_name:
         type: string
         default: "Job"
+      image_name:
+        type: string
+        default: "" 
     steps:
       - notify_teams:
           status: "Success"
