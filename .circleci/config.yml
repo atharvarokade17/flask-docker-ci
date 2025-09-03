@@ -91,6 +91,9 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
+          job_name: "Build Docker Image"
+          success_message: "The Docker image was built and pushed successfully."
+          failure_message: "There was an error building or pushing the Docker image."
 
 workflows:
   version: 2
