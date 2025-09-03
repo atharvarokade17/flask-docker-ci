@@ -28,8 +28,6 @@ commands:
         type: string
       title:
         type: string
-      message:
-        type: string
       condition:
         type: string
         default: "always"
