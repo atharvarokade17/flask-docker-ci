@@ -12,6 +12,9 @@ commands:
       condition:
         type: string
         default: "always"
+      image_name:
+        type: string
+        default: "" 
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
@@ -42,9 +45,6 @@ commands:
       job_name:
         type: string
         default: "Job"
-      image_name:
-        type: string
-        default: ""
     steps:
       - notify_teams:
           status: "Success"
