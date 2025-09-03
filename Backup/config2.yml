@@ -1,25 +1,6 @@
 version: 2.1
 
 commands:
-  notify_teams_status:
-    parameters:
-      job_name:
-        type: string
-        default: "Job"
-
-    steps:
-      - notify_teams:
-          status: "Success"
-          color: "00FF00"
-          title: "✅ << parameters.job_name >> Succeeded"
-          condition: on_success
-
-      - notify_teams:
-          status: "Failed"
-          color: "FF0000"
-          title: "❌ << parameters.job_name >> Failed"
-          condition: on_fail
-
   notify_teams:
     parameters:
       status:
@@ -55,6 +36,24 @@ commands:
               ]
             }" $TEAMS_WEBHOOK_URL
 
+  notify_teams_status:
+    parameters:
+      job_name:
+        type: string
+        default: "Job"
+    steps:
+      - notify_teams:
+          status: "Success"
+          color: "00FF00"
+          title: "✅ << parameters.job_name >> Succeeded"
+          condition: on_success
+
+      - notify_teams:
+          status: "Failed"
+          color: "FF0000"
+          title: "❌ << parameters.job_name >> Failed"
+          condition: on_fail
+
 jobs:
   build_docker_image:
     docker:
@@ -86,3 +85,4 @@ workflows:
   docker_build:
     jobs:
       - build_docker_image
+      

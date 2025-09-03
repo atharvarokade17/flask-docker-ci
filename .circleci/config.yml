@@ -25,7 +25,8 @@ commands:
               \"title\": \"<< parameters.title >>\",
               \"sections\": [
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}
+                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"},
+                {\"text\": \"**Image Name**  << parameters.image_name >>\"}
               ],
               \"potentialAction\": [
                 {
@@ -41,18 +42,23 @@ commands:
       job_name:
         type: string
         default: "Job"
+      image_name:
+        type: string
+        default: ""
     steps:
       - notify_teams:
           status: "Success"
           color: "00FF00"
           title: "✅ << parameters.job_name >> Succeeded"
           condition: on_success
+          image_name: "<< parameters.image_name >>"
 
       - notify_teams:
           status: "Failed"
           color: "FF0000"
           title: "❌ << parameters.job_name >> Failed"
           condition: on_fail
+          image_name: "<< parameters.image_name >>"
 
 jobs:
   build_docker_image:
@@ -79,10 +85,10 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
           job_name: "Build Docker Image"
+          image_name: "$IMAGE_NAME:$IMAGE_TAG"
 
 workflows:
   version: 2
   docker_build:
     jobs:
       - build_docker_image
-      
