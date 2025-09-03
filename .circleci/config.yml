@@ -1,6 +1,5 @@
 version: 2.1
 
-# Reusable commands
 commands:
   notify_teams_status:
     parameters:
@@ -68,7 +67,6 @@ commands:
               ]
             }" $TEAMS_WEBHOOK_URL
 
-# Jobs
 jobs:
   build_docker_image:
     docker:
@@ -97,7 +95,6 @@ jobs:
           success_message: "The Docker image was built and pushed successfully."
           failure_message: "The build failed. Please check CircleCI logs."
 
-# Workflows
 workflows:
   version: 2
   docker_build:
