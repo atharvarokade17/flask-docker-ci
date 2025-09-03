@@ -6,25 +6,18 @@ commands:
       job_name:
         type: string
         default: "Job"
-      success_message:
-        type: string
-        default: "Job succeeded."
-      failure_message:
-        type: string
-        default: "Job failed."
+
     steps:
       - notify_teams:
           status: "Success"
           color: "00FF00"
           title: "✅ << parameters.job_name >> Succeeded"
-          message: "<< parameters.success_message >>"
           condition: on_success
 
       - notify_teams:
           status: "Failed"
           color: "FF0000"
           title: "❌ << parameters.job_name >> Failed"
-          message: "<< parameters.failure_message >>"
           condition: on_fail
 
   notify_teams:
@@ -53,10 +46,7 @@ commands:
               \"title\": \"<< parameters.title >>\",
               \"sections\": [
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"},
-                {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
-                {\"text\": \"**Repository**  ${IMAGE_NAME}\"},
-                {\"text\": \"**Message**  << parameters.message >>\"}
+                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}
               ],
               \"potentialAction\": [
                 {
@@ -92,8 +82,6 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
           job_name: "Build Docker Image"
-          success_message: "The Docker image was built and pushed successfully."
-          failure_message: "There was an error building or pushing the Docker image."
 
 workflows:
   version: 2
