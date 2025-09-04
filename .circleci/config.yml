@@ -12,7 +12,7 @@ commands:
       condition:
         type: string
         default: "always"
-      image_tag:
+      image-tag:
         type: string
         default: "latest"  
 
@@ -47,7 +47,7 @@ commands:
     parameters:
       title:
         type: string
-      image_tag:
+      image-tag:
         type: string    
         default: "latest"   
         
@@ -89,7 +89,7 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
           title: "Build Docker Image"
-          image_tag: "$IMAGE_TAG"
+          image-tag: "$IMAGE_TAG"
 
 workflows:
   version: 2
