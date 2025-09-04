@@ -12,9 +12,7 @@ commands:
       condition:
         type: string
         default: "always"
-      image-tag:
-        type: string
-        default: "latest"  
+ 
 
     steps:
       - run:
