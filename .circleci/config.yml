@@ -48,6 +48,9 @@ commands:
       title:
         type: string
         default: $CIRCLE_JOB
+      image_tag:
+        type: string
+        default: "latest"   
 
     steps:
       - notify_teams:
