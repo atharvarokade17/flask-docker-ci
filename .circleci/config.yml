@@ -12,7 +12,7 @@ commands:
       condition:
         type: string
         default: "always"
-      image_tag:
+      image-tag:
         type: string
         default: "latest"   
 
@@ -48,7 +48,7 @@ commands:
       title:
         type: string
         default: $CIRCLE_JOB
-      image_tag:
+      image-tag:
         type: string
         default: "latest"   
 
