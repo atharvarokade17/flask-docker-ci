@@ -45,9 +45,7 @@ commands:
     parameters:
       title:
         type: string
-      image-tag:
-        type: string
-        default: "latest"       
+         
     steps:
       - notify_teams:
           status: "Success"
