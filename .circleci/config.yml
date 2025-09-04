@@ -45,7 +45,7 @@ commands:
     parameters:
       title:
         type: string
-         
+
     steps:
       - notify_teams:
           status: "Success"
@@ -84,7 +84,7 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
           title: "Build Docker Image"
-          image-tag: $IMAGE_TAG
+
 workflows:
   version: 2
   docker_build:
