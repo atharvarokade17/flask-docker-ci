@@ -30,7 +30,7 @@ commands:
               \"sections\": [
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
-                {\"text\": \"**Image Tag**  << parameters.image-tag >>\"}
+                {\"text\": \"**Tag**  << parameters.image-tag >>\"}
               ],
               \"potentialAction\": [
                 {
