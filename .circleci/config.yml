@@ -39,21 +39,20 @@ commands:
 
   notify_teams_status:
     parameters:
-      job_name:
+      title:
         type: string
-        default: "Job"
         
     steps:
       - notify_teams:
           status: "Success"
           color: "00FF00"
-          title: "✅ << parameters.job_name >> Succeeded"
+          title: "✅ << parameters.title >> Succeded"
           condition: on_success
 
       - notify_teams:
           status: "Failed"
           color: "FF0000"
-          title: "❌ << parameters.job_name >> Failed"
+          title: "❌ << parameters.title >> Failed"
           condition: on_fail
 
 jobs:
@@ -80,8 +79,7 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
-          job_name: "Build Docker Image"
-
+          title: "Build Docker Image"
 
 workflows:
   version: 2
