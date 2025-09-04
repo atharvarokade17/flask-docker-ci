@@ -12,6 +12,7 @@ commands:
       condition:
         type: string
         default: "always"
+
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
@@ -25,33 +26,36 @@ commands:
               \"title\": \"<< parameters.title >>\",
               \"sections\": [
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"**Job Number**  ${CIRCLE_BUILD_NUM}\"}
+                {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
+                {\"text\": \"**Image Tag**  ${IMAGE_TAG}\"}
               ],
               \"potentialAction\": [
                 {
                   \"@type\": \"OpenUri\",
                   \"name\": \"View Job in CircleCI\",
-                  \"targets\": [{ \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }]
+                  \"targets\": [
+                    { \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }
+                  ]
                 }
               ]
             }" $TEAMS_WEBHOOK_URL
 
   notify_teams_status:
     parameters:
-      job_name:
+      title:
         type: string
-        default: "Job"
+        
     steps:
       - notify_teams:
           status: "Success"
           color: "00FF00"
-          title: "✅ << parameters.job_name >> Succeeded"
+          title: "✅ << parameters.title >> Succeeded"
           condition: on_success
 
       - notify_teams:
           status: "Failed"
           color: "FF0000"
-          title: "❌ << parameters.job_name >> Failed"
+          title: "❌ << parameters.title >> Failed"
           condition: on_fail
 
 jobs:
@@ -78,11 +82,10 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
-          job_name: "Build Docker Image"
+          title: "Build Docker Image"
 
 workflows:
   version: 2
   docker_build:
     jobs:
       - build_docker_image
-      
