@@ -101,8 +101,20 @@ jobs:
       - notify_teams:
           status: "On Hold"
           color: "FFFF00"
-          title: "⏸️ Workflow is waiting for manual approval"
+          title: "⏸️ Workflow is waiting for manual approval before deploy"
           condition: always
+
+  deploy_app:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Deploy application
+          command: |
+            echo "🚀 Deploying application..."
+      - notify_teams_status:
+          title: "Deploy Application"
+          image-tag: "latest"
 
 workflows:
   version: 2
@@ -113,6 +125,9 @@ workflows:
           type: approval
           requires:
             - build_docker_image
-      - notify_on_hold:   # runs immediately after build, in parallel with approval
+      - notify_on_hold:   # runs as soon as approval step is reached
           requires:
             - build_docker_image
+      - deploy_app:
+          requires:
+            - hold_for_approval
