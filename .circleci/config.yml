@@ -113,6 +113,6 @@ workflows:
           type: approval
           requires:
             - build_docker_image
-      - notify_on_hold:
+      - notify_on_hold:   # runs immediately after build, in parallel with approval
           requires:
-            - hold_for_approval
+            - build_docker_image
