@@ -94,6 +94,16 @@ jobs:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
 
+  notify_on_hold:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - notify_teams:
+          status: "On Hold"
+          color: "FFFF00"
+          title: "⏸️ Workflow is waiting for manual approval"
+          condition: always
+
 workflows:
   version: 2
   docker_build:
@@ -103,3 +113,6 @@ workflows:
           type: approval
           requires:
             - build_docker_image
+      - notify_on_hold:
+          requires:
+            - hold_for_approval

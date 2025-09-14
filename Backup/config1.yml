@@ -12,7 +12,9 @@ commands:
       condition:
         type: string
         default: "always"
- 
+      image-tag:
+        type: string
+        default: "latest"
 
     steps:
       - run:
@@ -28,7 +30,7 @@ commands:
               \"sections\": [
                 {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
                 {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
-                {\"text\": \"**Image Tag**  ${IMAGE_TAG}\"}
+                {\"text\": \"**Tag**  << parameters.image-tag >>\"}
               ],
               \"potentialAction\": [
                 {
@@ -45,6 +47,10 @@ commands:
     parameters:
       title:
         type: string
+        default: $CIRCLE_JOB
+      image-tag:
+        type: string
+        default: "latest"
 
     steps:
       - notify_teams:
@@ -52,12 +58,14 @@ commands:
           color: "00FF00"
           title: "✅ << parameters.title >> Succeeded"
           condition: on_success
+          image-tag: "<< parameters.image-tag >>"
 
       - notify_teams:
           status: "Failed"
           color: "FF0000"
           title: "❌ << parameters.title >> Failed"
           condition: on_fail
+          image-tag: "<< parameters.image-tag >>"
 
 jobs:
   build_docker_image:
@@ -84,9 +92,14 @@ jobs:
             docker push $IMAGE_NAME:$IMAGE_TAG
       - notify_teams_status:
           title: "Build Docker Image"
+          image-tag: "${IMAGE_TAG}"
 
 workflows:
   version: 2
   docker_build:
     jobs:
       - build_docker_image
+      - hold_for_approval:
+          type: approval
+          requires:
+            - build_docker_image
