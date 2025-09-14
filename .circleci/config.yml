@@ -99,3 +99,7 @@ workflows:
   docker_build:
     jobs:
       - build_docker_image
+      - hold_for_approval:
+          type: approval
+          requires:
+            - build_docker_image
