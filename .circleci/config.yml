@@ -15,7 +15,6 @@ commands:
       image-tag:
         type: string
         default: "latest"
-
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
@@ -51,7 +50,6 @@ commands:
       image-tag:
         type: string
         default: "latest"
-
     steps:
       - notify_teams:
           status: "Success"
@@ -99,7 +97,6 @@ jobs:
       - notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
-      - notify_on_hold   
 
   deploy_app:
     docker:
