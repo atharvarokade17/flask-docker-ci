@@ -111,7 +111,7 @@ jobs:
       - run:
           name: Deploy application
           command: |
-            echo "🚀 Deploying application..."
+            echo "Deploying application..."
       - notify_teams_status:
           title: "Deploy Application"
           image-tag: "latest"
