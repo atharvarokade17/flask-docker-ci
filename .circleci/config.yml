@@ -125,9 +125,9 @@ workflows:
           type: approval
           requires:
             - build_docker_image
-    #  - notify_on_hold:   
-    #      requires:
-    #        - build_docker_image
+      - notify_on_hold:   
+          requires:
+            - build_docker_image
       - deploy_app:
           requires:
             - hold_for_approval
