@@ -67,6 +67,14 @@ commands:
           condition: on_fail
           image-tag: "<< parameters.image-tag >>"
 
+  notify_on_hold:   # 👈 new concise wrapper for hold notification
+    steps:
+      - notify_teams:
+          status: "On Hold"
+          color: "FFFF00"
+          title: "⏸️ Workflow is waiting for manual approval before deploy"
+          condition: always
+
 jobs:
   build_docker_image:
     docker:
@@ -93,11 +101,7 @@ jobs:
       - notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
-      - notify_teams:   # 🔔 inline "On Hold" notification (instead of separate job)
-          status: "On Hold"
-          color: "FFFF00"
-          title: "⏸️ Workflow is waiting for manual approval before deploy"
-          condition: always
+      - notify_on_hold   # 👈 now concise, just one line
 
   deploy_app:
     docker:
