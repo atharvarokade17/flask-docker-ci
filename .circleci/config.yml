@@ -15,6 +15,7 @@ commands:
       image-tag:
         type: string
         default: "latest"
+
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
@@ -50,6 +51,7 @@ commands:
       image-tag:
         type: string
         default: "latest"
+
     steps:
       - notify_teams:
           status: "Success"
@@ -64,12 +66,6 @@ commands:
           title: "❌ << parameters.title >> Failed"
           condition: on_fail
           image-tag: "<< parameters.image-tag >>"
-
-      - notify_teams:
-          status: "On Hold"
-          color: "FFFF00"
-          title: "⏸️ Workflow is waiting for manual approval before deploy"
-          condition: always
 
 jobs:
   build_docker_image:
@@ -98,6 +94,16 @@ jobs:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
 
+  notify_on_hold:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - notify_teams:
+          status: "On Hold"
+          color: "FFFF00"
+          title: "⏸️ Workflow is waiting for manual approval before deploy"
+          condition: always
+
   deploy_app:
     docker:
       - image: cimg/base:stable
@@ -115,10 +121,13 @@ workflows:
   docker_build:
     jobs:
       - build_docker_image
-      #- hold_for_approval:
-          #type: approval
-          #requires:
-           # - build_docker_image
-      #- deploy_app:
-          #requires:
-          #  - hold_for_approval
+    #  - hold_for_approval:
+    #      type: approval
+    #      requires:
+    #        - build_docker_image
+    #  - notify_on_hold:   
+    #      requires:
+    #        - build_docker_image
+    #  - deploy_app:
+    #      requires:
+    #        - hold_for_approval

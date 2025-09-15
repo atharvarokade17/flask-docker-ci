@@ -54,7 +54,6 @@ commands:
           condition: on_fail
           image-tag: << parameters.image-tag >>
 
-# 🔔 NEW notify_on_hold job
 jobs:
   notify_on_hold:
     docker:
@@ -230,7 +229,7 @@ workflows:
           type: approval
           requires:
             - build-push-to-ecr
-      - notify_on_hold:   # 🔔 notify Teams when approval is reached
+      - notify_on_hold:   
           requires:
             - build-push-to-ecr
       - deploy-aws-ssm:
@@ -259,7 +258,7 @@ workflows:
           type: approval
           requires:
             - build-push-to-dockerhub
-      - notify_on_hold:   # 🔔 notify Teams when approval is reached
+      - notify_on_hold:   
           requires:
             - build-push-to-dockerhub
       - deploy-ec2-ssh:
