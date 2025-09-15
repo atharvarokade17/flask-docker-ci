@@ -67,8 +67,6 @@ commands:
           condition: on_fail
           image-tag: "<< parameters.image-tag >>"
 
-  notify_on_hold:   # 👈 new concise wrapper for hold notification
-    steps:
       - notify_teams:
           status: "On Hold"
           color: "FFFF00"
@@ -101,7 +99,7 @@ jobs:
       - notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
-      - notify_on_hold   # 👈 now concise, just one line
+      - notify_on_hold   
 
   deploy_app:
     docker:
