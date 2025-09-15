@@ -1,0 +1,273 @@
+version: 2.1
+ 
+orbs:
+  aws-cli: circleci/aws-cli@5.4.1
+  aws-ecr: circleci/aws-ecr@9.5.4
+ 
+commands:
+  msft_teams:
+    description: Send notification to Microsoft Teams channel via webhook
+    parameters:
+      status: { type: string }
+      color: { type: string }
+      title: { type: string }
+      image-tag: { type: string, default: "latest" }
+      condition: { type: string, default: "always" }
+    steps:
+      - run:
+          name: Notify Microsoft Teams (<< parameters.status >>)
+          when: << parameters.condition >>
+          command: |
+            curl -H 'Content-Type: application/json' -d "{
+              \"@type\": \"MessageCard\",
+              \"@context\": \"http://schema.org/extensions\",
+              \"summary\": \"<< parameters.status >>\",
+              \"themeColor\": \"<< parameters.color >>\",
+              \"title\": \"<< parameters.title >>\", 
+              \"sections\": [
+                {\"text\": \"**Project** ${CIRCLE_PROJECT_REPONAME}\"},
+                {\"text\": \"**Branch** ${CIRCLE_BRANCH}\"},
+                {\"text\": \"**Tag** << parameters.image-tag >>\"}
+              ],
+              \"potentialAction\": [{
+                \"@type\": \"OpenUri\",
+                \"name\": \"View Job in CircleCI\",
+                \"targets\": [{ \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }]
+              }]
+            }" $MS_TEAMS_WEBHOOK
+
+  notify_teams_status:
+    parameters:
+      title: { type: string, default: $CIRCLE_JOB }
+      image-tag: { type: string, default: latest }
+    steps:
+      - msft_teams:
+          status: Success
+          color: 00FF00
+          title: ✅ << parameters.title >> Succeeded
+          condition: on_success
+          image-tag: << parameters.image-tag >>
+      - msft_teams:
+          status: Failed
+          color: FF0000
+          title: ❌ << parameters.title >> Failed
+          condition: on_fail
+          image-tag: << parameters.image-tag >>
+
+# 🔔 NEW notify_on_hold job
+jobs:
+  notify_on_hold:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - msft_teams:
+          status: "On Hold"
+          color: "FFFF00"
+          title: "⏸️ Workflow is waiting for manual approval before deploy"
+          condition: always
+
+  build-push-to-dockerhub:
+    parameters:
+      docker-tag: {type: string}
+      docker-container: {type: string}
+    docker:
+      - image: cimg/base:2024.02
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - add_ssh_keys:
+          fingerprints:
+            - $GITHUB_SSH_FINGERPRINT
+      - run:
+          name: Build docker image
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker build --ssh default --file Dockerfile.template --tag \
+            $DOCKER_USERNAME/<< parameters.docker-tag >>:<< parameters.docker-container >> .
+            docker push $DOCKER_USERNAME/<< parameters.docker-tag >>:<< parameters.docker-container >>
+      - notify_teams_status:
+          title: "Build and Push Docker Image to DockerHub"
+          image-tag: << parameters.docker-container >>
+
+  build-push-to-ecr:
+    parameters:
+      aws-ecr-repo: {type: string}
+    docker:
+      - image: cimg/base:2024.02
+    steps:
+      - checkout
+      - setup_remote_docker
+      - add_ssh_keys:
+          fingerprints:
+            - $GITHUB_SSH_FINGERPRINT
+      - run:
+          name: Set tag
+          command: |
+            DEPLOYMENT_TAG=$(date +'%y%m%d')
+            echo "DEPLOYMENT_TAG=$DEPLOYMENT_TAG" | tee -a ci.env >> $BASH_ENV
+      - aws-ecr/build_and_push_image:
+          auth:
+            - aws-cli/setup
+          account_id: $AWS_REGISTRY_ID
+          repo: << parameters.aws-ecr-repo >>
+          dockerfile: Dockerfile.template
+          platform: linux/amd64
+          extra_build_args: --ssh default
+          tag: $DEPLOYMENT_TAG,latest
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ci.env
+      - notify_teams_status:
+          title: "Build and Push Docker Image to AWS ECR"
+          image-tag: $DEPLOYMENT_TAG, latest
+
+  deploy-aws-ssm:
+    parameters:
+      compose-file: {type: string}
+      instance-id: {type: string}
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Install jq to parse JSON output by SSM commands
+          command: |
+            yum install -y jq
+      - run:
+          name: Execute Docker Commands on AWS Instance to deploy the application
+          command: |
+            command_id=$(aws ssm send-command \
+              --instance-ids "<< parameters.instance-id >>" \
+              --document-name "AWS-RunShellScript" \
+              --comment "Executing Docker operations" \
+              --parameters commands='[
+                "set -e",
+                "cd /home/ec2-user",
+                "trap '\''echo DOCKER_LOGIN_FAILURE 1>&2'\'' ERR; \
+                aws ecr get-login-password --region ap-south-1 | \
+                docker login --username AWS --password-stdin 747597981629.dkr.ecr.ap-south-1.amazonaws.com",
+                "trap '\''echo DOCKER_PULL_FAILURE 1>&2'\'' ERR; \
+                docker-compose -f << parameters.compose-file >> pull",
+                "trap '\''echo DOCKER_DOWN_FAILURE 1>&2'\'' ERR; \
+                docker-compose -f << parameters.compose-file >> down",
+                "trap '\''echo DOCKER_UP_FAILURE 1>&2'\'' ERR; \
+                docker-compose -f << parameters.compose-file >> up -d"
+              ]' --region ap-south-1 --query 'Command.CommandId' --output text)
+            echo "Command ID: $command_id"
+            echo "export command_id=$command_id" >> $BASH_ENV
+      - run:
+          name: Wait for Command Execution
+          command: |
+            timeout 180 aws ssm wait command-executed \
+              --command-id $command_id \
+              --instance-id "<< parameters.instance-id >>" --region ap-south-1 || true
+      - run:
+          name: Retrieve and Store SSM Command Results
+          command: |
+            ssm_command_output=$(aws ssm get-command-invocation \
+              --command-id $command_id \
+              --instance-id "<< parameters.instance-id >>" --region ap-south-1)
+            status=$(echo "$ssm_command_output" | jq -r '.Status')
+            standard_output_content=$(echo "$ssm_command_output" | jq -r '.StandardOutputContent')
+            standard_error_content=$(echo "$ssm_command_output" | jq -r '.StandardErrorContent')
+            standard_error_content=${standard_error_content//$'\n'/' '}
+            echo "Status: $status"
+            echo "Standard Output: $standard_output_content"
+            echo "Standard Error: $standard_error_content"
+            if [ "$status" != "Success" ]; then
+              echo "If status of ssm command is not successful, explicitly fail the circleci job"
+              exit 1
+            fi
+      - notify_teams_status:
+          title: "Deploy service on AWS EC2 via SSM"
+
+  deploy-ec2-ssh:
+    parameters:
+      compose-file: {type: string}
+      docker-container: {type: string}
+    docker:
+      - image: cimg/base:2024.02
+    steps:
+      - run:
+          name: Deploy project
+          command: |
+            ssh $SSH_USERNAME@$SSH_HOSTNAME -o 'StrictHostKeyChecking no' \
+            "echo '$DOCKER_PASSWORD' | docker login -u '$DOCKER_USERNAME' --password-stdin \
+            && docker compose -f << parameters.compose-file >> pull \
+            && docker compose -f << parameters.compose-file >> up -d"
+      - notify_teams_status:
+          title: "Deploy service on AWS EC2 via SSH"
+          image-tag: << parameters.docker-container >>
+
+workflows:
+  dev-workflows:
+    jobs:
+      - build-push-to-ecr:
+          aws-ecr-repo: alpha/msvc
+          filters:
+            branches:
+              only:
+                - ci-notif
+          context:
+            - BIRR_AWS_ECR_CREDS
+            - BIRR_INTEGRATIONS
+ 
+  preprod-workflows:
+    jobs:
+      - build-push-to-ecr:
+          aws-ecr-repo: birrpreprod/msvc
+          filters:
+            branches:
+              only:
+                - saas/preprod
+          context:
+            - BIRR_AWS_ECR_CREDS
+            - BIRR_INTEGRATIONS
+      - hold:
+          type: approval
+          requires:
+            - build-push-to-ecr
+      - notify_on_hold:   # 🔔 notify Teams when approval is reached
+          requires:
+            - build-push-to-ecr
+      - deploy-aws-ssm:
+          compose-file: docker-compose-msvc.yaml
+          instance-id: $PREPROD_INSTANCE_ID
+          requires:
+            - hold
+          context:
+            - BIRR_AWS_ECR_CREDS
+            - BIRR_AWS_EC2_INSTANCES
+            - BIRR_INTEGRATIONS
+ 
+  prod-workflows:
+    jobs:
+      - build-push-to-dockerhub:
+          docker-tag: $DOCKER_TAG
+          docker-container: $DOCKER_CONTAINER
+          filters:
+            branches:
+              only:
+                - saas/prod
+          context:
+            - DOCKER_CREDS_PROD
+            - BIRR_INTEGRATIONS
+      - hold:
+          type: approval
+          requires:
+            - build-push-to-dockerhub
+      - notify_on_hold:   # 🔔 notify Teams when approval is reached
+          requires:
+            - build-push-to-dockerhub
+      - deploy-ec2-ssh:
+          compose-file: docker-compose-sonofanton.yaml
+          docker-container: $DOCKER_CONTAINER
+          requires:
+            - hold
+          context:
+            - DOCKER_CREDS_PROD
+            - SSH_INVESTEDGE_PROD
+            - BIRR_INTEGRATIONS

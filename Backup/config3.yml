@@ -93,7 +93,12 @@ jobs:
       - notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
-      - notify_teams:   # 🔔 inline "On Hold" notification (instead of separate job)
+
+  notify_on_hold:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - notify_teams:
           status: "On Hold"
           color: "FFFF00"
           title: "⏸️ Workflow is waiting for manual approval before deploy"
@@ -118,6 +123,9 @@ workflows:
       - build_docker_image
       - hold_for_approval:
           type: approval
+          requires:
+            - build_docker_image
+      - notify_on_hold:   
           requires:
             - build_docker_image
       - deploy_app:
