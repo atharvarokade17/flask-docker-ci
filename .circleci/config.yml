@@ -65,14 +65,6 @@ commands:
           condition: on_fail
           image-tag: "<< parameters.image-tag >>"
 
-  notify_on_hold:
-    steps:
-      - notify_teams:
-          status: "On Hold"
-          color: "FFFF00"
-          title: "⏸️ Workflow is waiting for manual approval before deploy"
-          condition: always
-
 jobs:
   build_docker_image:
     docker:
@@ -104,7 +96,12 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      - notify_on_hold 
+      # ⏸️ Notify right at job start (but only AFTER approval is given)
+      - notify_teams:
+          status: "On Hold"
+          color: "FFFF00"
+          title: "⏸️ Workflow was waiting for manual approval before deploy"
+          condition: always
       - run:
           name: Deploy application
           command: |
