@@ -104,6 +104,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
+      - notify_on_hold 
       - run:
           name: Deploy application
           command: |
@@ -122,8 +123,5 @@ workflows:
           requires:
             - build_docker_image
       - deploy_app:
-          requires:
-            - hold_for_approval
-      - notify_on_hold:   # 🔔 notification runs ONLY when workflow hits approval
           requires:
             - hold_for_approval
