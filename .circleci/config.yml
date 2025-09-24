@@ -67,13 +67,10 @@ jobs:
           fingerprints:
             - $GITHUB_SSH_FINGERPRINT
       - azure-cli/install
-      - run:
-          name: Debug Azure SP variables
-          command: |
-            echo "AZURE_SP: $AZURE_SP"
-            echo "AZURE_SP_TENANT: $AZURE_SP_TENANT"
-            echo "AZURE_SP_PASSWORD length: ${#AZURE_SP_PASSWORD}"
       - azure-cli/login-with-service-principal
+      - run:
+          name: List resources of tenant stored as `AZURE_SP_TENANT` env var
+          command: az resource list
       - run:
           name: Set tag
           command: |
