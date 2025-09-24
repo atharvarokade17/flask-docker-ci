@@ -58,7 +58,7 @@ jobs:
     parameters:
       acr-repository: { type: string }
     docker:
-      - image: cimg/base:2024.02
+      - image: mcr.microsoft.com/azure-cli
     steps:
       - checkout
       - setup_remote_docker:
@@ -68,9 +68,6 @@ jobs:
             - $GITHUB_SSH_FINGERPRINT
       - azure-cli/install
       - azure-cli/login-with-service-principal:
-          client-id: $AZURE_SP
-          tenant-id: $AZURE_SP_TENANT
-          client-secret: $AZURE_SP_PASSWORD
       - run:
           name: Set tag
           command: |
