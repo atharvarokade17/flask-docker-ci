@@ -93,5 +93,5 @@ workflows:
     jobs:
       - build-push-to-acr:
           acr-repository: sample-repo
-          context:
+          context: 
             - AZURE_CREDS
