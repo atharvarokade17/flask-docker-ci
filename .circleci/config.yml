@@ -58,7 +58,7 @@ jobs:
     parameters:
       acr-repository: { type: string }
     docker:
-      - image: mcr.microsoft.com/azure-cli
+      - image: cimg/base:2024.02
     steps:
       - checkout
       - setup_remote_docker:
