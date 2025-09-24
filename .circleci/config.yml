@@ -67,7 +67,10 @@ jobs:
           fingerprints:
             - $GITHUB_SSH_FINGERPRINT
       - azure-cli/install
-      - azure-cli/login-with-service-principal
+      - azure-cli/login-with-service-principal:
+          client-id: $AZURE_SP
+          tenant-id: $AZURE_SP_TENANT
+          client-secret: $AZURE_SP_PASSWORD
       - run:
           name: Set tag
           command: |
