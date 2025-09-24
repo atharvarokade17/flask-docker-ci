@@ -56,7 +56,7 @@ commands:
 jobs:
   build-push-to-acr:
     parameters:
-      acr-repository: {type: string}
+      acr-repository: { type: string }
     docker:
       - image: cimg/base:2024.02
     steps:
@@ -67,11 +67,13 @@ jobs:
           fingerprints:
             - $GITHUB_SSH_FINGERPRINT
       - azure-cli/install
-      - azure-cli/login-with-service-principal:
-          environment:
-            AZURE_SP: $AZURE_SP
-            AZURE_SP_PASSWORD: $AZURE_SP_PASSWORD
-            AZURE_SP_TENANT: $AZURE_SP_TENANT
+      - run:
+          name: Debug Azure SP variables
+          command: |
+            echo "AZURE_SP: $AZURE_SP"
+            echo "AZURE_SP_TENANT: $AZURE_SP_TENANT"
+            echo "AZURE_SP_PASSWORD length: ${#AZURE_SP_PASSWORD}"
+      - azure-cli/login-with-service-principal
       - run:
           name: Set tag
           command: |
@@ -99,7 +101,3 @@ workflows:
           acr-repository: sample-repo
           context: 
             - AZURE_CREDS
-
-
-
-
