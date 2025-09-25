@@ -66,10 +66,8 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - $GITHUB_SSH_FINGERPRINT
-      - run:
-          name: Install and Log in to Azure CLI
-          command: |
-            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      - azure-cli/install      
+      - azure-cli/login-with-service-principal
       - run:
           name: Set tag
           command: |
