@@ -1,7 +1,6 @@
 version: 2.1
 
 orbs:
-  azure-cli: circleci/azure-cli@1.3.2
   azure-acr: circleci/azure-acr@0.2.3
 
 commands:
@@ -66,8 +65,11 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - $GITHUB_SSH_FINGERPRINT
-      - azure-cli/install
-      - azure-cli/login-with-service-principal
+      - run:
+          name: Install Azure CLI
+          command: |
+            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+            az login --service-principal -u $AZURE_SP -p $AZURE_SP_PASSWORD --tenant $AZURE_SP_TENANT            
       - run:
           name: Set tag
           command: |
@@ -97,4 +99,3 @@ workflows:
             - AZURE_CREDS
 
 
-            
