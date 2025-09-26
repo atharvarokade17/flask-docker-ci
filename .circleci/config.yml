@@ -73,12 +73,13 @@ jobs:
             DEPLOYMENT_TAG=$(date +'%y%m%d')
             echo "DEPLOYMENT_TAG=$DEPLOYMENT_TAG" | tee -a ci.env >> $BASH_ENV
       - azure-acr/build-and-push-image:
-          login-server-name: $DOCKER_ACR_REGISTRY
-          registry-name: $DOCKER_ACR_USERNAME        
+          login-server-name: $DOCKER_ACR_REGISTRY      
           repo: $DOCKER_ACR_REPOSITORY
           dockerfile: Dockerfile
           extra-build-args: "--platform linux/amd64 --ssh default"
           tag: $DEPLOYMENT_TAG,latest
+          username: $DOCKER_ACR_USERNAME
+          password: $DOCKER_ACR_PASSWORD
       - persist_to_workspace:
           root: .
           paths:
