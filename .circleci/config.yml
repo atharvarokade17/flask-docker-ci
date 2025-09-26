@@ -54,8 +54,6 @@ commands:
 
 jobs:
   build-push-to-acr:
-    parameters:
-      acr-repository: { type: string }
     docker:
       - image: cimg/base:2024.02
     steps:
@@ -77,7 +75,7 @@ jobs:
       - azure-acr/build-and-push-image:
           login-server-name: $DOCKER_ACR_REGISTRY    
           registry-name: $DOCKER_ACR_NAME            
-          repo: << parameters.acr-repository >>
+          repo: $DOCKER_ACR_REPOSITORY
           dockerfile: Dockerfile
           extra-build-args: "--platform linux/amd64 --ssh default"
           tag: $DEPLOYMENT_TAG,latest
@@ -93,6 +91,5 @@ workflows:
   internal-workflows:
     jobs:
       - build-push-to-acr:
-          acr-repository: sample-repo
           context: 
             - AZURE_CREDS
