@@ -95,4 +95,3 @@ workflows:
           acr-repository: sample-repo
           context: 
             - AZURE_CREDS
-            
