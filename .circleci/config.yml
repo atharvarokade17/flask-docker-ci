@@ -74,7 +74,7 @@ jobs:
             echo "DEPLOYMENT_TAG=$DEPLOYMENT_TAG" | tee -a ci.env >> $BASH_ENV
       - azure-acr/build-and-push-image:
           login-server-name: $DOCKER_ACR_REGISTRY
-          registry-name: $DOCKER_ACR_NAME        
+          registry-name: $DOCKER_ACR_USERNAME        
           repo: $DOCKER_ACR_REPOSITORY
           dockerfile: Dockerfile
           extra-build-args: "--platform linux/amd64 --ssh default"
