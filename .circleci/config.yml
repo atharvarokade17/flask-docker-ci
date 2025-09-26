@@ -54,8 +54,6 @@ commands:
 
 jobs:
   build-push-to-acr:
-    parameters:
-      acr-repository: { type: string }
     docker:
       - image: cimg/base:2024.02
     steps:
