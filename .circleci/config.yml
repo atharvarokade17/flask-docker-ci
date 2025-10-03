@@ -1,53 +1,7 @@
 version: 2.1
 
-commands:
-  msft_teams:
-    description: Send notification to Microsoft Teams channel via webhook
-    parameters:
-      status: { type: string }
-      color: { type: string }
-      title: { type: string }
-      image-tag: { type: string, default: "latest" }
-      condition: { type: string, default: "always" }
-    steps:
-      - run:
-          name: Notify Microsoft Teams (<< parameters.status >>)
-          when: << parameters.condition >>
-          command: |
-            curl -H 'Content-Type: application/json' -d "{
-              \"@type\": \"MessageCard\",
-              \"@context\": \"http://schema.org/extensions\",
-              \"summary\": \"<< parameters.status >>\",
-              \"themeColor\": \"<< parameters.color >>\",
-              \"title\": \"<< parameters.title >>\",
-              \"sections\": [
-                {\"text\": \"**Project** ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"**Branch** ${CIRCLE_BRANCH}\"},
-                {\"text\": \"**Tag** << parameters.image-tag >>\"}
-              ],
-              \"potentialAction\": [{
-                \"@type\": \"OpenUri\",
-                \"name\": \"View Job in CircleCI\",
-                \"targets\": [{ \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }]
-              }]
-            }" $MS_TEAMS_WEBHOOK
-  notify_teams_status:
-    parameters:
-      title: { type: string, default: $CIRCLE_JOB }
-      image-tag: { type: string, default: latest }
-    steps:
-      - msft_teams:
-          status: Success
-          color: 00FF00
-          title: ✅ << parameters.title >> Succeeded
-          condition: on_success
-          image-tag: << parameters.image-tag >>
-      - msft_teams:
-          status: Failed
-          color: FF0000
-          title: ❌ << parameters.title >> Failed
-          condition: on_fail
-          image-tag: << parameters.image-tag >>
+orbs:
+  teams-notifier: atharva17/teams-notifier@1.0.0
 
 jobs:
   build_docker_image:
@@ -72,7 +26,7 @@ jobs:
           command: |
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
-      - notify_teams_status:
+      - teams-notifier/notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
 
@@ -81,4 +35,3 @@ workflows:
   docker_build:
     jobs:
       - build_docker_image
-      

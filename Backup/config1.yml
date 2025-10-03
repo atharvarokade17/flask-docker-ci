@@ -1,21 +1,14 @@
 version: 2.1
 
 commands:
-  notify_teams:
+  msft_teams:
+    description: Send notification to Microsoft Teams channel via webhook
     parameters:
-      status:
-        type: string
-      color:
-        type: string
-      title:
-        type: string
-      condition:
-        type: string
-        default: "always"
-      image-tag:
-        type: string
-        default: "latest"
-
+      status: { type: string }
+      color: { type: string }
+      title: { type: string }
+      image-tag: { type: string, default: "latest" }
+      condition: { type: string, default: "always" }
     steps:
       - run:
           name: Notify Microsoft Teams (<< parameters.status >>)
@@ -28,44 +21,33 @@ commands:
               \"themeColor\": \"<< parameters.color >>\",
               \"title\": \"<< parameters.title >>\",
               \"sections\": [
-                {\"text\": \"**Project**  ${CIRCLE_PROJECT_REPONAME}\"},
-                {\"text\": \"**Branch**  ${CIRCLE_BRANCH}\"},
-                {\"text\": \"**Tag**  << parameters.image-tag >>\"}
+                {\"text\": \"**Project** ${CIRCLE_PROJECT_REPONAME}\"},
+                {\"text\": \"**Branch** ${CIRCLE_BRANCH}\"},
+                {\"text\": \"**Tag** << parameters.image-tag >>\"}
               ],
-              \"potentialAction\": [
-                {
-                  \"@type\": \"OpenUri\",
-                  \"name\": \"View Job in CircleCI\",
-                  \"targets\": [
-                    { \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }
-                  ]
-                }
-              ]
-            }" $TEAMS_WEBHOOK_URL
-
+              \"potentialAction\": [{
+                \"@type\": \"OpenUri\",
+                \"name\": \"View Job in CircleCI\",
+                \"targets\": [{ \"os\": \"default\", \"uri\": \"${CIRCLE_BUILD_URL}\" }]
+              }]
+            }" $MS_TEAMS_WEBHOOK
   notify_teams_status:
     parameters:
-      title:
-        type: string
-        default: $CIRCLE_JOB
-      image-tag:
-        type: string
-        default: "latest"
-
+      title: { type: string, default: $CIRCLE_JOB }
+      image-tag: { type: string, default: latest }
     steps:
-      - notify_teams:
-          status: "Success"
-          color: "00FF00"
-          title: "✅ << parameters.title >> Succeeded"
+      - msft_teams:
+          status: Success
+          color: 00FF00
+          title: ✅ << parameters.title >> Succeeded
           condition: on_success
-          image-tag: "<< parameters.image-tag >>"
-
-      - notify_teams:
-          status: "Failed"
-          color: "FF0000"
-          title: "❌ << parameters.title >> Failed"
+          image-tag: << parameters.image-tag >>
+      - msft_teams:
+          status: Failed
+          color: FF0000
+          title: ❌ << parameters.title >> Failed
           condition: on_fail
-          image-tag: "<< parameters.image-tag >>"
+          image-tag: << parameters.image-tag >>
 
 jobs:
   build_docker_image:
@@ -99,7 +81,4 @@ workflows:
   docker_build:
     jobs:
       - build_docker_image
-      - hold_for_approval:
-          type: approval
-          requires:
-            - build_docker_image
+      
