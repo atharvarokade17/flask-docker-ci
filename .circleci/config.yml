@@ -3,7 +3,8 @@ version: 2.1
 orbs:
   teams-notifier: atharva17/teams-notifier@1.0.0
   echo-orb: atharva17/echo-orb@1.0.0
-  
+  experiment-orb: atharva17/experiment-orb@0.1.0
+
 jobs:
   build_docker_image:
     docker:
@@ -12,22 +13,32 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+
       - run:
           name: Authenticate with DockerHub
           command: |
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
       - run:
           name: Build Docker image
           command: |
             IMAGE_TAG=$(date +'%Y%m%d')
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
+
       - run:
           name: Push Docker image
           command: |
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
+
+      # 🔹 Call your echo-orb command
       - echo-orb/my-command
+
+      # 🔹 Call your experimental orb command
+      - experiment-orb/experiment-command
+
+      # 🔹 Notify Teams
       - teams-notifier/notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
