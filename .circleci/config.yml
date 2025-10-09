@@ -32,13 +32,10 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      # 🔹 Call your echo-orb command
       - echo-orb/my-command
 
-      # 🔹 Call your experimental orb command
       - experiment-orb/experiment-command
-
-      # 🔹 Notify Teams
+      
       - teams-notifier/notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
