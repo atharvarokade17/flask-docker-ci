@@ -27,9 +27,8 @@ jobs:
           command: |
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
-
-      - echo-orb
-
+      - echo-orb/echo:
+          message: "Docker image $IMAGE_NAME:$IMAGE_TAG built and pushed successfully."
       - teams-notifier/notify_teams_status:
           title: "Build Docker Image"
           image-tag: "${IMAGE_TAG}"
