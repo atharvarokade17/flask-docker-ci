@@ -4,7 +4,7 @@ orbs:
   teams-notifier: atharva17/teams-notifier@1.0.0
 
 jobs:
-  build_docker_image:
+  build-push-to-dockerhub:
     docker:
       - image: cimg/base:stable
     steps:
@@ -38,4 +38,4 @@ workflows:
   version: 2
   docker_build:
     jobs:
-      - build_docker_image
+      - build-push-to-dockerhub
