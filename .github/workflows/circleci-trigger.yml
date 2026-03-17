@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "Triggering CircleCI pipeline..."
 
-          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/circleci/$PROJECT_SLUG/pipeline/run \
+          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline/run \
           -H "Circle-Token: $CIRCLE_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
