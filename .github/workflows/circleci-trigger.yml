@@ -13,15 +13,17 @@ jobs:
       - name: Trigger CircleCI pipeline and monitor status
         env:
           CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
+          PROJECT_SLUG: ${{ secrets.CIRCLE_PROJECT_SLUG }}
+          DEFINITION_ID: ${{ secrets.CIRCLE_DEFINITION_ID }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
           echo "Triggering CircleCI pipeline..."
 
-          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/circleci/QWN8vX21fhdBu8kACa4z5w/3uQARv8g1rHVnDEy5ezCSR/pipeline/run \
+          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/circleci/$PROJECT_SLUG/pipeline/run \
           -H "Circle-Token: $CIRCLE_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
-            "definition_id": "494369bd-56eb-414b-9989-d202a267c12f",
+            "definition_id": "'"$DEFINITION_ID"'",
             "config": { "branch": "'"$BRANCH_NAME"'" },
             "checkout": { "branch": "'"$BRANCH_NAME"'" }
           }')
