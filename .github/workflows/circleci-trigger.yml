@@ -22,7 +22,8 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "definition_id": "494369bd-56eb-414b-9989-d202a267c12f",
-            "checkout": {"branch": "'"$BRANCH_NAME"'"}
+            "config": { "branch": "'"$BRANCH_NAME"'" },
+            "checkout": { "branch": "'"$BRANCH_NAME"'" }
           }')
 
           echo "CircleCI response:"
