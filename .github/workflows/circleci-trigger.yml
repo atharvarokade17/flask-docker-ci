@@ -12,15 +12,15 @@ jobs:
     steps:
       - name: Trigger CircleCI pipeline and monitor status
         env:
-          CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }} 
-          PROJECT_SLUG: ${{ secrets.CIRCLE_PROJECT_SLUG }}
-          DEFINITION_ID: ${{ secrets.CIRCLE_DEFINITION_ID }}
+          CIRCLECI_TOKEN: ${{ secrets.CIRCLECI_TOKEN }} 
+          PROJECT_SLUG: ${{ secrets.PROJECT_SLUG }}
+          DEFINITION_ID: ${{ secrets.DEFINITION_ID }}
           BRANCH_NAME: ${{ github.ref_name }}         
         run: |
           echo "Triggering CircleCI pipeline..."
 
-          RESPONSE=$(curl -X POST https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline/run \
-          -H "Circle-Token: $CIRCLE_TOKEN" \
+          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline/run \
+          -H "Circle-Token: $CIRCLECI_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
             "definition_id": "'"$DEFINITION_ID"'",
@@ -40,7 +40,7 @@ jobs:
 
           while true
           do
-            STATUS=$(curl -H "Circle-Token: $CIRCLE_TOKEN" \
+            STATUS=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
             https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow \
             | jq -r '.items[0].status')
 
