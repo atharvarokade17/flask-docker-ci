@@ -42,7 +42,7 @@ jobs:
           do
             STATUS=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
             https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow \
-            | jq -r '.items[0].status')
+            | jq -r '.items[].status')
 
             echo "CircleCI status: $STATUS"
 
