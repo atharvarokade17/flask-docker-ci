@@ -10,12 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger CircleCI pipeline and wait for result
+      - name: Trigger CircleCI pipeline and monitor status
         env:
           CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
           BRANCH_NAME: ${{ github.ref_name }}
         run: |
-
           echo "Triggering CircleCI pipeline..."
 
           RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/circleci/QWN8vX21fhdBu8kACa4z5w/3uQARv8g1rHVnDEy5ezCSR/pipeline/run \
@@ -26,10 +25,19 @@ jobs:
             "checkout": {"branch": "'"$BRANCH_NAME"'"}
           }')
 
-          PIPELINE_ID=$(echo $RESPONSE | jq -r '.id')
+          echo "CircleCI response:"
+          echo "$RESPONSE"
+
+          PIPELINE_ID=$(jq -r '.id' <<< "$RESPONSE")
+
+          if [ "$PIPELINE_ID" = "null" ] || [ -z "$PIPELINE_ID" ]; then
+            echo "Failed to get pipeline ID"
+            exit 1
+          fi
 
           echo "Pipeline ID: $PIPELINE_ID"
 
+          echo "Waiting for workflow to start..."
           sleep 20
 
           while true
@@ -40,12 +48,12 @@ jobs:
 
             echo "CircleCI status: $STATUS"
 
-            if [[ "$STATUS" == "success" ]]; then
+            if [ "$STATUS" = "success" ]; then
               echo "CircleCI pipeline succeeded"
               exit 0
             fi
 
-            if [[ "$STATUS" == "failed" || "$STATUS" == "canceled" ]]; then
+            if [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ] || [ "$STATUS" = "error" ]; then
               echo "CircleCI pipeline failed"
               exit 1
             fi
