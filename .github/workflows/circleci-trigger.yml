@@ -55,7 +55,11 @@ jobs:
               echo "Workflow is now running"
               break
             fi
+            
+            if [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ] || [ "$STATUS" = "error" ]; then
+              echo "CircleCI pipeline failed with status: $STATUS"
+              exit 1
+            fi            
 
             sleep 5
           done
-          
