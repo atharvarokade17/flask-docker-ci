@@ -41,7 +41,7 @@ jobs:
 
           echo "Pipeline ID: $PIPELINE_ID"
 
-          echo "Waiting for workflow to be available..."
+          echo "Waiting for workflow to start..."
 
           MAX_RETRIES=60
           RETRY_COUNT=0
