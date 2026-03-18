@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger CircleCI pipeline and monitor status
+      - name: Trigger CircleCI pipeline and check status once
         env:
           CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
           PROJECT_SLUG: ${{ secrets.CIRCLE_PROJECT_SLUG }}
@@ -33,34 +33,29 @@ jobs:
 
           PIPELINE_ID=$(jq -r '.id' <<< "$RESPONSE")
 
+          if [ "$PIPELINE_ID" = "null" ] || [ -z "$PIPELINE_ID" ]; then
+            echo "Failed to trigger pipeline"
+            exit 1
+          fi
+
           echo "Pipeline ID: $PIPELINE_ID"
 
-          echo "Waiting for workflow to be available..."
+          echo "Waiting for workflow to start..."
+          sleep 60   
 
-          while true
-          do
-            RESPONSE=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
-            https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow)
+          STATUS=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
+          https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow \
+          | jq -r '.items[0].status')
 
-            STATUS=$(echo "$RESPONSE" | jq -r '.items[0].status // empty')
+          echo "Final CircleCI status: $STATUS"
 
-            if [ -z "$STATUS" ]; then
-              echo "Workflow not started yet..."
-              sleep 5
-              continue
-            fi
-
-            echo "CircleCI status: $STATUS"
-
-            if [ "$STATUS" = "success" ]; then
-              echo "CircleCI pipeline succeeded"
-              exit 0
-            fi
-
-            if [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ] || [ "$STATUS" = "error" ]; then
-              echo "CircleCI pipeline failed"
-              exit 1
-            fi
-
-            sleep 10
-          done
+          if [ "$STATUS" = "success" ]; then
+            echo "CircleCI pipeline succeeded"
+            exit 0
+          elif [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ] || [ "$STATUS" = "error" ]; then
+            echo "CircleCI pipeline failed"
+            exit 1
+          else
+            echo "CircleCI pipeline still running or not started properly"
+            exit 1
+          fi
