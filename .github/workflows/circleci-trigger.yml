@@ -31,7 +31,12 @@ jobs:
           echo "CircleCI response:"
           echo "$RESPONSE"
 
-          PIPELINE_ID=$(jq -r '.id' <<< "$RESPONSE")
+          PIPELINE_ID=$(jq -r '.id // empty' <<< "$RESPONSE")
+
+          if [ -z "$PIPELINE_ID" ]; then
+            echo "Failed to get pipeline ID"
+            exit 1
+          fi
 
           echo "Pipeline ID: $PIPELINE_ID"
 
