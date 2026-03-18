@@ -43,8 +43,18 @@ jobs:
           echo "Waiting for workflow to start..."
           sleep 20
 
+          MAX_RETRIES=60
+          RETRY_COUNT=0
+
           while true
           do
+            RETRY_COUNT=$((RETRY_COUNT+1))
+
+            if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+              echo "Reached max retries. Exiting..."
+              exit 1
+            fi
+
             STATUS=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
             https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow \
             | jq -r '.items[0].status')
