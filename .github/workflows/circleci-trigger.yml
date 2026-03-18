@@ -40,7 +40,6 @@ jobs:
           fi
 
           echo "Pipeline ID: $PIPELINE_ID"
-
           echo "Waiting for workflow to start running..."
 
           while true
@@ -50,15 +49,8 @@ jobs:
 
             STATUS=$(echo "$RESPONSE" | jq -r '.items[0].status // empty')
 
-            if [ -z "$STATUS" ]; then
-              echo "Workflow not started yet..."
-              sleep 5
-              continue
-            fi
-
             echo "CircleCI workflow status: $STATUS"
 
-            # Exit loop once workflow enters 'running' state
             if [ "$STATUS" = "running" ]; then
               echo "Workflow is now running"
               break
