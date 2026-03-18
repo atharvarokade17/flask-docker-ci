@@ -27,4 +27,3 @@ jobs:
             "config": { "branch": "'"$BRANCH_NAME"'" },
             "checkout": { "branch": "'"$BRANCH_NAME"'" }
           }'
-          
