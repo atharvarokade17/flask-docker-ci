@@ -49,7 +49,6 @@ jobs:
           while true
           do
             RETRY_COUNT=$((RETRY_COUNT+1))
-            echo "Attempt $RETRY_COUNT / $MAX_RETRIES"
 
             if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
               echo "Reached max retries. Exiting..."
