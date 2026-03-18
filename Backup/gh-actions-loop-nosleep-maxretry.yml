@@ -35,19 +35,37 @@ jobs:
 
           if [ -z "$PIPELINE_ID" ]; then
             echo "Failed to get pipeline ID"
+            echo "$RESPONSE"
             exit 1
           fi
 
           echo "Pipeline ID: $PIPELINE_ID"
 
-          echo "Waiting for workflow to start..."
-          sleep 20
+          echo "Waiting for workflow to be available..."
+
+          MAX_RETRIES=60
+          RETRY_COUNT=0
 
           while true
           do
-            STATUS=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
-            https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow \
-            | jq -r '.items[0].status')
+            RETRY_COUNT=$((RETRY_COUNT+1))
+            echo "Attempt $RETRY_COUNT / $MAX_RETRIES"
+
+            if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+              echo "Reached max retries. Exiting..."
+              exit 1
+            fi
+
+            RESPONSE=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
+            https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow)
+
+            STATUS=$(echo "$RESPONSE" | jq -r '.items[0].status // empty')
+
+            if [ -z "$STATUS" ]; then
+              echo "Workflow not started yet..."
+              sleep 5
+              continue
+            fi
 
             echo "CircleCI status: $STATUS"
 
