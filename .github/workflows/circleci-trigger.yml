@@ -35,14 +35,20 @@ jobs:
 
           echo "Pipeline ID: $PIPELINE_ID"
 
-          echo "Waiting for workflow to start..."
-          sleep 20
+          echo "Waiting for workflow to be available..."
 
           while true
           do
-            STATUS=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
-            https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow \
-            | jq -r '.items[].status')
+            RESPONSE=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
+            https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow)
+
+            STATUS=$(echo "$RESPONSE" | jq -r '.items[0].status // empty')
+
+            if [ -z "$STATUS" ]; then
+              echo "Workflow not started yet..."
+              sleep 5
+              continue
+            fi
 
             echo "CircleCI status: $STATUS"
 
@@ -58,4 +64,3 @@ jobs:
 
             sleep 10
           done
-
