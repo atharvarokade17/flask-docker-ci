@@ -3,6 +3,7 @@ name: Trigger CircleCI Pipeline
 on:
   push:
     branches:
+      - dev
       - main
 
   workflow_dispatch:
@@ -63,4 +64,3 @@ jobs:
           fi
 
           echo "Pipeline triggered. ID: $PIPELINE_ID"
-          
