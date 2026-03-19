@@ -10,7 +10,6 @@ on:
       branch:
         description: "Branch to trigger"
         required: true
-        default: ""
       definition_id:
         description: "CircleCI Definition ID"
         required: true
@@ -24,8 +23,7 @@ jobs:
         shell: bash
 
     steps:
-      - name: Resolve inputs
-        id: resolve
+      - name: Setup runtime variables
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "BRANCH_NAME=${{ inputs.branch }}" >> $GITHUB_ENV
