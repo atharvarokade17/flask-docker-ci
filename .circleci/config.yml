@@ -1,7 +1,7 @@
 version: 2.1
 
-orbs:
-  teams-notifier: atharva17/teams-notifier@1.0.0
+#orbs:
+ # teams-notifier: atharva17/teams-notifier@1.0.0
 
 jobs:
   build-push-to-dockerhub:
@@ -10,19 +10,19 @@ jobs:
     steps:
       - checkout
 
-      - run:
-          name: Notify GitHub (running)
-          command: |
-            curl -X POST https://api.github.com/repos/atharvarokade17/flask-docker-ci/dispatches \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GITHUB_TOKEN" \
-              -d '{
-                "event_type": "circleci-status",
-                "client_payload": {
-                  "status": "running",
-                  "branch": "'"$CIRCLE_BRANCH"'"
-                }
-              }'
+      # - run:
+      #     name: Notify GitHub (running)
+      #     command: |
+      #       curl -X POST https://api.github.com/repos/atharvarokade17/flask-docker-ci/dispatches \
+      #         -H "Accept: application/vnd.github+json" \
+      #         -H "Authorization: Bearer $GITHUB_TOKEN" \
+      #         -d '{
+      #           "event_type": "circleci-status",
+      #           "client_payload": {
+      #             "status": "running",
+      #             "branch": "'"$CIRCLE_BRANCH"'"
+      #           }
+      #         }'
 
       - setup_remote_docker:
           docker_layer_caching: true
@@ -45,12 +45,37 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-      - teams-notifier/notify_teams_status:
-          title: "Build Docker Image"
-          image-tag: "${IMAGE_TAG}"
+  #    - teams-notifier/notify_teams_status:
+   #       title: "Build Docker Image"
+    #      image-tag: "${IMAGE_TAG}"
+
+  hello-world:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Print Hello World
+          command: echo "Hello, World!"        
 
 workflows:
   version: 2
-  docker_build:
+  dev-workflow:
     jobs:
       - build-push-to-dockerhub
+    filters:
+      branches:
+        only: dev    
+  main-workflows:
+    jobs:
+      - build-push-to-dockerhub:
+          filters:
+            branches:
+              only:
+                - main
+      - hold:
+          type: approval
+          requires:
+            - build-push-to-dockerhub
+      - hello-world:
+          requires:
+            - hold
