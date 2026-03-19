@@ -61,10 +61,12 @@ workflows:
   version: 2
   dev-workflow:
     jobs:
-      - build-push-to-dockerhub
-    filters:
-      branches:
-        only: dev    
+      - build-push-to-dockerhub:
+          filters:
+            branches:
+              only:
+                - dev
+
   main-workflows:
     jobs:
       - build-push-to-dockerhub:
