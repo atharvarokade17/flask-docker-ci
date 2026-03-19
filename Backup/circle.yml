@@ -13,7 +13,7 @@ jobs:
       - run:
           name: Notify GitHub (running)
           command: |
-            curl -X POST https://api.github.com/repos/atharvarokade17/flask-docker-ci/dispatches \
+            curl -X POST https://api.github.com/repos/<OWNER>/<REPO>/dispatches \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
               -d '{
