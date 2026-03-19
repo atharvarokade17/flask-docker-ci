@@ -1,7 +1,7 @@
 version: 2.1
 
-#orbs:
- # teams-notifier: atharva17/teams-notifier@1.0.0
+orbs:
+  teams-notifier: atharva17/teams-notifier@1.0.0
 
 jobs:
   build-push-to-dockerhub:
@@ -45,9 +45,9 @@ jobs:
             source $BASH_ENV
             docker push $IMAGE_NAME:$IMAGE_TAG
 
-  #    - teams-notifier/notify_teams_status:
-   #       title: "Build Docker Image"
-    #      image-tag: "${IMAGE_TAG}"
+      - teams-notifier/notify_teams_status:
+          title: "Build Docker Image"
+          image-tag: "${IMAGE_TAG}"
 
   hello-world:
     docker:
