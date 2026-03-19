@@ -1,0 +1,65 @@
+name: Trigger CircleCI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-circleci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger CircleCI pipeline and monitor running state
+        env:
+          CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
+          PROJECT_SLUG: ${{ secrets.CIRCLE_PROJECT_SLUG }}
+          DEFINITION_ID: ${{ secrets.CIRCLE_DEFINITION_ID }}
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          echo "Triggering CircleCI pipeline..."
+
+          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline/run \
+          -H "Circle-Token: $CIRCLE_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "definition_id": "'"$DEFINITION_ID"'",
+            "config": { "branch": "'"$BRANCH_NAME"'" },
+            "checkout": { "branch": "'"$BRANCH_NAME"'" }
+          }')
+
+          echo "CircleCI response:"
+          echo "$RESPONSE"
+
+          PIPELINE_ID=$(jq -r '.id // empty' <<< "$RESPONSE")
+
+          if [ -z "$PIPELINE_ID" ]; then
+            echo "Failed to get pipeline ID"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          echo "Pipeline ID: $PIPELINE_ID"
+          echo "Waiting for workflow to start running..."
+
+          while true
+          do
+            RESPONSE=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
+            https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow)
+
+            STATUS=$(echo "$RESPONSE" | jq -r '.items[0].status // empty')
+
+            echo "CircleCI workflow status: $STATUS"
+
+            if [ "$STATUS" = "running" ]; then
+              echo "Workflow is now running"
+              break
+            fi
+            
+            if [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ] || [ "$STATUS" = "error" ]; then
+              echo "CircleCI pipeline failed with status: $STATUS"
+              exit 1
+            fi            
+
+            sleep 5
+          done
