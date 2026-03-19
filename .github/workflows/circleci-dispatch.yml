@@ -1,15 +1,15 @@
-# name: CircleCI Callback Workflow
+name: CircleCI Callback Workflow
 
-# on:
-#   repository_dispatch:
-#     types: [circleci-status]
+on:
+  repository_dispatch:
+    types: [circleci-status]
 
-# jobs:
-#   handle-circleci-event:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Print payload
-#         run: |
-#           echo "Received event from CircleCI"
-#           echo "Status: ${{ github.event.client_payload.status }}"
-#           echo "Branch: ${{ github.event.client_payload.branch }}"
+jobs:
+  handle-circleci-event:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print payload
+        run: |
+          echo "Received event from CircleCI"
+          echo "Status: ${{ github.event.client_payload.status }}"
+          echo "Branch: ${{ github.event.client_payload.branch }}"
