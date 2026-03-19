@@ -6,16 +6,16 @@ on:
       - dev
       - main
 
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to trigger"
-        required: true
-        default: dev
-        type: choice
-        options:
-          - dev
-          - main
+  # workflow_dispatch:
+  #   inputs:
+  #     branch:
+  #       description: "Branch to trigger"
+  #       required: true
+  #       default: dev
+  #       type: choice
+  #       options:
+  #         - dev
+  #         - main
 
 jobs:
   trigger-circleci:
