@@ -1,65 +1,69 @@
-name: Trigger CircleCI Pipeline
+version: 2.1
 
-on:
-  push:
-    branches:
-      - main
+orbs:
+  teams-notifier: atharva17/teams-notifier@1.0.0
 
 jobs:
-  trigger-circleci:
-    runs-on: ubuntu-latest
-
+  build-push-to-dockerhub:
+    docker:
+      - image: cimg/base:stable
     steps:
-      - name: Trigger CircleCI pipeline and monitor running state
-        env:
-          CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
-          PROJECT_SLUG: ${{ secrets.CIRCLE_PROJECT_SLUG }}
-          DEFINITION_ID: ${{ secrets.CIRCLE_DEFINITION_ID }}
-          BRANCH_NAME: ${{ github.ref_name }}
-        run: |
-          echo "Triggering CircleCI pipeline..."
+      - checkout
 
-          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline/run \
-          -H "Circle-Token: $CIRCLE_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "definition_id": "'"$DEFINITION_ID"'",
-            "config": { "branch": "'"$BRANCH_NAME"'" },
-            "checkout": { "branch": "'"$BRANCH_NAME"'" }
-          }')
+      - setup_remote_docker:
+          docker_layer_caching: true
 
-          echo "CircleCI response:"
-          echo "$RESPONSE"
+      - run:
+          name: Authenticate with DockerHub
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-          PIPELINE_ID=$(jq -r '.id // empty' <<< "$RESPONSE")
+      - run:
+          name: Build Docker image
+          command: |
+            IMAGE_TAG=$(date +'%Y%m%d')
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+            docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
 
-          if [ -z "$PIPELINE_ID" ]; then
-            echo "Failed to get pipeline ID"
-            echo "$RESPONSE"
-            exit 1
-          fi
+      - run:
+          name: Push Docker image
+          command: |
+            source $BASH_ENV
+            docker push $IMAGE_NAME:$IMAGE_TAG
 
-          echo "Pipeline ID: $PIPELINE_ID"
-          echo "Waiting for workflow to start running..."
+      - teams-notifier/notify_teams_status:
+          title: "Build Docker Image"
+          image-tag: "${IMAGE_TAG}"
 
-          while true
-          do
-            RESPONSE=$(curl -s -H "Circle-Token: $CIRCLE_TOKEN" \
-            https://circleci.com/api/v2/pipeline/$PIPELINE_ID/workflow)
+  hello-world:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Print Hello World
+          command: echo "Hello, World!"        
 
-            STATUS=$(echo "$RESPONSE" | jq -r '.items[0].status // empty')
+workflows:
+  version: 2
+  dev-workflow:
+    jobs:
+      - build-push-to-dockerhub:
+          filters:
+            branches:
+              only:
+                - dev
 
-            echo "CircleCI workflow status: $STATUS"
-
-            if [ "$STATUS" = "running" ]; then
-              echo "Workflow is now running"
-              break
-            fi
-            
-            if [ "$STATUS" = "failed" ] || [ "$STATUS" = "canceled" ] || [ "$STATUS" = "error" ]; then
-              echo "CircleCI pipeline failed with status: $STATUS"
-              exit 1
-            fi            
-
-            sleep 5
-          done
+  main-workflows:
+    jobs:
+      - build-push-to-dockerhub:
+          filters:
+            branches:
+              only:
+                - main
+      - hold:
+          type: approval
+          requires:
+            - build-push-to-dockerhub
+      - hello-world:
+          requires:
+            - hold            

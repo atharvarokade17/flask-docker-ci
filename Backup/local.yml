@@ -1,0 +1,55 @@
+name: Trigger CircleCI Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  trigger-circleci:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name : Setup runtime variables
+        id : setup
+        run: |
+          BRANCH="${{ inputs.branch || github.ref_name }}"
+          echo "BRANCH_NAME=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Trigger CircleCI pipeline
+        env:
+          CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
+          PROJECT_SLUG: ${{ secrets.CIRCLE_PROJECT_SLUG }}
+          DEFINITION_ID: ${{ secrets.CIRCLE_DEFINITION_ID }}
+          BRANCH_NAME: ${{ steps.setup.outputs.BRANCH_NAME }}
+        run: |
+          echo "Triggering CircleCI pipeline for branch: ${BRANCH_NAME}"
+
+          RESPONSE=$(curl -s -X POST https://circleci.com/api/v2/project/$PROJECT_SLUG/pipeline/run \
+            -H "Circle-Token: $CIRCLE_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg def_id "$DEFINITION_ID" \
+              --arg branch "$BRANCH_NAME" \
+              '{
+                definition_id: $def_id,
+                config:   { branch: $branch },
+                checkout: { branch: $branch }
+              }'
+            )")
+
+          PIPELINE_ID=$(jq -r '.id // empty' <<< "$RESPONSE")
+
+          if [ -z "$PIPELINE_ID" ]; then
+            echo "::error::Failed to retrieve pipeline ID. Response: $RESPONSE"
+            exit 1
+          fi
+
+          echo "Pipeline triggered. ID: $PIPELINE_ID"

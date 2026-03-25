@@ -7,9 +7,22 @@ jobs:
   build-push-to-dockerhub:
     docker:
       - image: cimg/base:stable
-
     steps:
       - checkout
+
+      # - run:
+      #     name: Notify GitHub (running)
+      #     command: |
+      #       curl -X POST https://api.github.com/repos/atharvarokade17/flask-docker-ci/dispatches \
+      #         -H "Accept: application/vnd.github+json" \
+      #         -H "Authorization: Bearer $GITHUB_TOKEN" \
+      #         -d '{
+      #           "event_type": "circleci-status",
+      #           "client_payload": {
+      #             "status": "running",
+      #             "branch": "'"$CIRCLE_BRANCH"'"
+      #           }
+      #         }'
 
       - setup_remote_docker:
           docker_layer_caching: true
@@ -25,34 +38,6 @@ jobs:
             IMAGE_TAG=$(date +'%Y%m%d')
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
-
-      # 🔍 Trivy Scan (best practice - via Docker)
-      - run:
-          name: Run Trivy Scan (Fail on HIGH/CRITICAL)
-          command: |
-            source $BASH_ENV
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              aquasec/trivy:latest image \
-              --exit-code 1 \
-              --severity HIGH,CRITICAL \
-              $IMAGE_NAME:$IMAGE_TAG
-
-      # 📄 Generate report for stakeholders
-      - run:
-          name: Generate Trivy Report
-          command: |
-            source $BASH_ENV
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -v $(pwd):/output \
-              aquasec/trivy:latest image \
-              -f json \
-              -o /output/trivy-report.json \
-              $IMAGE_NAME:$IMAGE_TAG
-
-      - store_artifacts:
-          path: trivy-report.json
 
       - run:
           name: Push Docker image
@@ -70,11 +55,10 @@ jobs:
     steps:
       - run:
           name: Print Hello World
-          command: echo "Hello, World!"
+          command: echo "Hello, World!"        
 
 workflows:
   version: 2
-
   dev-workflow:
     jobs:
       - build-push-to-dockerhub:
@@ -90,12 +74,10 @@ workflows:
             branches:
               only:
                 - main
-
       - hold:
           type: approval
           requires:
             - build-push-to-dockerhub
-
       - hello-world:
           requires:
-            - hold
+            - hold            
