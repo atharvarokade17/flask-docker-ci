@@ -7,7 +7,6 @@ jobs:
   build-push-to-dockerhub:
     docker:
       - image: cimg/base:stable
-
     steps:
       - checkout
 
@@ -26,33 +25,28 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
 
-      # 🔍 Trivy Scan (best practice - via Docker)
+      # 🔍 Install Trivy
       - run:
-          name: Run Trivy Scan (Fail on HIGH/CRITICAL)
+          name: Install Trivy
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+            sudo apt-get update
+            sudo apt-get install -y trivy
+
+      # 🔍 Scan Image
+      - run:
+          name: Scan Docker image with Trivy
           command: |
             source $BASH_ENV
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              aquasec/trivy:0.69.3 image \
-              --exit-code 1 \
-              --severity HIGH,CRITICAL \
-              $IMAGE_NAME:$IMAGE_TAG
+            trivy image --severity HIGH,CRITICAL --exit-code 1 --format table -o trivy-report.txt $IMAGE_NAME:$IMAGE_TAG
 
-      # 📄 Generate report for stakeholders
-      - run:
-          name: Generate Trivy Report
-          command: |
-            source $BASH_ENV
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -v $(pwd):/output \
-              aquasec/trivy:0.69.3 image \
-              -f json \
-              -o /output/trivy-report.json \
-              $IMAGE_NAME:$IMAGE_TAG
-
+      # 📤 Store report as artifact
       - store_artifacts:
-          path: trivy-report.json
+          path: trivy-report.txt
+          destination: trivy-report
 
       - run:
           name: Push Docker image
@@ -70,7 +64,7 @@ jobs:
     steps:
       - run:
           name: Print Hello World
-          command: echo "Hello, World!"
+          command: echo "Hello, World!"        
 
 workflows:
   version: 2
@@ -90,12 +84,10 @@ workflows:
             branches:
               only:
                 - main
-
       - hold:
           type: approval
           requires:
             - build-push-to-dockerhub
-
       - hello-world:
           requires:
             - hold
