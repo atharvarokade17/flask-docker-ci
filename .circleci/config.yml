@@ -40,7 +40,7 @@ jobs:
 
       # 📦 Store report
       - store_artifacts:
-          path: /workspace/trivy-report.json
+          path: trivy-report.json
           destination: trivy-report
 
       - run:
