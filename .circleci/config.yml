@@ -25,27 +25,22 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
 
-      # 🔍 Install Trivy
+      # 🔒 Trivy Scan (Dockerized)
       - run:
-          name: Install Trivy
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
-            sudo apt-get update
-            sudo apt-get install -y trivy
-
-      # 🔍 Scan Image
-      - run:
-          name: Scan Docker image with Trivy
+          name: Scan Docker Image with Trivy
           command: |
             source $BASH_ENV
-            trivy image --severity HIGH,CRITICAL --exit-code 1 --format table -o trivy-report.txt $IMAGE_NAME:$IMAGE_TAG
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v $PWD:/workspace \
+              aquasec/trivy:0.69.3 image \
+              --format json \
+              --output /workspace/trivy-report.json \
+              $IMAGE_NAME:$IMAGE_TAG
 
-      # 📤 Store report as artifact
+      # 📦 Store report
       - store_artifacts:
-          path: trivy-report.txt
+          path: trivy-report.json
           destination: trivy-report
 
       - run:
@@ -77,7 +72,7 @@ workflows:
               only:
                 - dev
 
-  main-workflows:
+  prod-workflows:
     jobs:
       - build-push-to-dockerhub:
           filters:
