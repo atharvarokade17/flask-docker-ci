@@ -33,9 +33,11 @@ jobs:
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
               -v $PWD:/workspace \
+              -w /workspace \
               aquasec/trivy:0.69.3 image \
               --format json \
-              --output /workspace/trivy-report.json \
+              --output trivy-report.json \
+              --exit-code 0 \
               $IMAGE_NAME:$IMAGE_TAG
 
       # 📦 Store report
