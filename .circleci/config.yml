@@ -35,12 +35,12 @@ jobs:
               -v $PWD:/workspace \
               aquasec/trivy:0.69.3 image \
               --format json \
-              --output trivy-report.json \
+              --output /workspace/trivy-report.json \
               $IMAGE_NAME:$IMAGE_TAG
 
       # 📦 Store report
       - store_artifacts:
-          path: trivy-report.json
+          path: /workspace/trivy-report.json
           destination: trivy-report
 
       - run:
