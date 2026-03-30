@@ -26,6 +26,23 @@ jobs:
             docker build --platform linux/amd64 -t $IMAGE_NAME:$IMAGE_TAG .
 
       - run:
+          name: Scan Docker Image with Trivy
+          command: |
+            source $BASH_ENV
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v $PWD:/workspace \
+              -w /workspace \
+              aquasec/trivy:0.69.3 image \
+              --format json \
+              --output trivy-report.json \
+              $IMAGE_NAME:$IMAGE_TAG
+
+      - store_artifacts:
+          path: trivy-report.json
+          destination: trivy-report
+
+      - run:
           name: Push Docker image
           command: |
             source $BASH_ENV
@@ -45,6 +62,7 @@ jobs:
 
 workflows:
   version: 2
+
   dev-workflow:
     jobs:
       - build-push-to-dockerhub:
@@ -53,7 +71,7 @@ workflows:
               only:
                 - dev
 
-  main-workflows:
+  prod-workflows:
     jobs:
       - build-push-to-dockerhub:
           filters:
@@ -66,4 +84,4 @@ workflows:
             - build-push-to-dockerhub
       - hello-world:
           requires:
-            - hold            
+            - hold
