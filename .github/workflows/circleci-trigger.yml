@@ -9,13 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Select the branch to trigger the workflow"
+        description: "Enter full branch name to trigger the workflow"
         required: true
-        default: dev
-        type: choice
-        options:
-          - "*/dev"
-          - "*/main"
 
 jobs:
   trigger-circleci:
